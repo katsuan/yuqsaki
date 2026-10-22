@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ja" data-ls-dark="auto">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ゆくさき｜旅とおでかけのしおり</title>
+<meta name="description" content="ゆくさき（YuQsaki）。旅やおでかけの予定・場所・持ち物を、1つのしおりに。リンクで家族や友だちに渡せます。記録はこの端末の中だけ。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ゆくさき（YuQsaki）">
+<meta property="og:title" content="ゆくさき｜旅とおでかけのしおり">
+<meta property="og:description" content="予定・場所・持ち物を、1つのしおりに。リンクで家族や友だちに渡せます。">
+<meta property="og:url" content="https://katsuan.github.io/yuqsaki/">
+<meta property="og:image" content="https://katsuan.github.io/yuqsaki/ogp.png?v=1">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ゆくさき（YuQsaki）：旅とおでかけのしおり">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#eaf7f8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16151a" media="(prefers-color-scheme: dark)">
+<!-- 確認がすむまで、検索に出さない（公開するときに外す） -->
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="icon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://katsuan.github.io/line-share/shared/ui.css">
+<link rel="stylesheet" href="style.css?v=202610231">
+</head>
+<body>
+<main class="ls-page ls-stack">
+  <header class="ls-brand">
+    <h1 class="ls-brand-name"><img class="ls-brand-icon" src="icon.svg" alt="" width="30" height="30">ゆくさき</h1>
+    <img class="ls-brand-logo" src="logo.svg" alt="YuQsaki" width="84" height="28">
+  </header>
+  <p class="ls-brand-copy">ゆく先を、ひとつのしおりに</p>
+
+  <!-- しおりの切りかえ（2つ以上あるとき） -->
+  <nav id="tripBar" class="ls-chips trip-bar" aria-label="しおり"></nav>
+
+  <!-- しおりを作る・直す -->
+  <section id="tripForm" class="ls-panel" aria-labelledby="tripFormTitle" hidden>
+    <h2 id="tripFormTitle" class="ls-panel-title">🧳 <span id="tripFormHeading">しおりを作る</span></h2>
+    <label class="ls-field">
+      <span class="ls-label">行き先・名前</span>
+      <input id="tTitle" class="ls-input" maxlength="30" placeholder="例：沖縄 家族旅行" autocomplete="off" enterkeyhint="done">
+    </label>
+    <div class="ls-field">
+      <span class="ls-label">しるし</span>
+      <div id="tEmojis" class="emojis" role="radiogroup" aria-label="しるし"></div>
+    </div>
+    <div class="date-grid">
+      <label class="ls-field"><span class="ls-label">行く日</span><input id="tStart" class="ls-input" type="date"></label>
+      <label class="ls-field"><span class="ls-label">帰る日</span><input id="tEnd" class="ls-input" type="date"></label>
+    </div>
+    <p id="tStay" class="ls-hint stay"></p>
+    <div class="form-actions">
+      <button id="tSave" class="ls-button is-primary is-block" type="button">しおりを作る</button>
+      <button id="tCancel" class="ls-button is-block" type="button">やめる</button>
+    </div>
+  </section>
+
+  <!-- しおり -->
+  <div id="tripView" class="ls-stack" hidden>
+    <section class="ls-panel trip-head">
+      <div class="trip-title">
+        <span id="vEmoji" class="trip-emoji" aria-hidden="true"></span>
+        <div>
+          <h2 id="vTitle"></h2>
+          <p id="vDates"></p>
+        </div>
+        <span id="vCount" class="count"></span>
+      </div>
+      <div class="head-actions">
+        <button id="editTrip" class="ls-button two-line" type="button">✏️ 直す<small>名前・日にち</small></button>
+        <a id="qronosLink" class="ls-button" href="#" target="_blank" rel="noopener">⏳ くろのす<small>出発まで数える</small></a>
+      </div>
+    </section>
+
+    <!-- 日ごとの予定 -->
+    <section class="ls-panel" aria-labelledby="dayTitle">
+      <div id="dayTabs" class="ls-tabs day-tabs" role="tablist" aria-label="日にち"></div>
+      <h2 id="dayTitle" class="ls-sr-only">予定</h2>
+      <ol id="timeline" class="timeline"></ol>
+      <button id="addItemBtn" class="ls-button is-block add-item" type="button">＋ 予定を足す</button>
+
+      <!-- 予定を足す・直す（押したときだけ出す） -->
+      <div id="itemForm" class="item-form" hidden>
+        <p class="sub-title" id="itemFormHeading">＋ 予定を足す</p>
+        <div class="time-grid">
+          <label class="ls-field"><span class="ls-label">時刻（なくてもOK）</span><input id="iTime" class="ls-input" type="time"></label>
+          <label class="ls-field"><span class="ls-label">日にち</span><select id="iDay" class="ls-input"></select></label>
+        </div>
+        <div id="iKinds" class="kinds" role="radiogroup" aria-label="なにをする？"></div>
+        <label class="ls-field">
+          <span class="ls-label">予定</span>
+          <input id="iTitle" class="ls-input" maxlength="40" placeholder="例：美ら海水族館" autocomplete="off" enterkeyhint="next">
+        </label>
+        <label class="ls-field">
+          <span class="ls-label">場所（地図で開く。なければ予定の名前で探す）</span>
+          <input id="iPlace" class="ls-input" maxlength="80" placeholder="例：沖縄美ら海水族館" autocomplete="off" enterkeyhint="next">
+        </label>
+        <label class="ls-field">
+          <span class="ls-label">メモ</span>
+          <textarea id="iMemo" class="ls-input" rows="2" maxlength="200" placeholder="例：駐車場は P7 がいちばん近い"></textarea>
+        </label>
+        <div class="form-actions">
+          <button id="iSave" class="ls-button is-primary is-block" type="button">＋ 足す</button>
+          <button id="iCancel" class="ls-button is-block" type="button">やめる</button>
+        </div>
+        <div id="iMore" class="item-more" hidden>
+          <a id="iOqrn" class="ls-button is-block" href="#">💬 この予定をカードで送る<small>（おくるん）</small></a>
+          <button id="iDelete" class="link danger" type="button">この予定を消す</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 送る -->
+    <section class="ls-panel" aria-labelledby="sendTitle">
+      <h2 id="sendTitle" class="ls-panel-title">📤 みんなに渡す</h2>
+      <p class="ls-hint">しおりの中身をまるごとリンクに入れて渡します。受けとった人は、開くだけで同じしおりが見られます（その人の端末に入ります）。直したら、もう一度送ってください。</p>
+      <button id="shareBtn" class="ls-button is-primary is-block" type="button">🔗 しおりのリンクを送る</button>
+      <a id="cardBtn" class="ls-button is-block line" href="#">💬 LINEにカードで送る<small>（おくるん）</small></a>
+      <p id="cardNote" class="ls-hint small" hidden></p>
+    </section>
+
+    <div class="ls-folds">
+      <details class="ls-fold" id="bringFold">
+        <summary><span class="ls-fold-icon" aria-hidden="true">🎒</span>持ち物<span id="bringMeta" class="ls-fold-meta"></span></summary>
+        <div class="ls-fold-body">
+          <ul id="bringList" class="bring-list"></ul>
+          <div class="bring-add">
+            <input id="bName" class="ls-input" maxlength="30" placeholder="例：日焼け止め" autocomplete="off" enterkeyhint="done" aria-label="持ち物">
+            <button id="bAdd" class="ls-button is-primary" type="button">足す</button>
+          </div>
+          <div id="bIdeas" class="ls-chips" aria-label="よくある持ち物"></div>
+          <button id="bClear" class="link" type="button">チェックをぜんぶ外す</button>
+        </div>
+      </details>
+
+      <details class="ls-fold" id="settings">
+        <summary><span class="ls-fold-icon" aria-hidden="true">🔒</span>しおりの控え・消す</summary>
+        <div class="ls-fold-body">
+          <p class="ls-hint">しおりはこの端末（ブラウザ）の中だけにあります。機種変更の前などに、控えを書き出しておいてください。</p>
+          <div class="form-actions">
+            <button id="exportBtn" class="ls-button is-block" type="button">⬇️ 控えを書き出す</button>
+            <label class="ls-button is-block file-btn">⬆️ 控えを読みこむ<input id="importFile" type="file" accept="application/json,.json"></label>
+          </div>
+          <button id="deleteTrip" class="link danger" type="button">このしおりを消す</button>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <p id="status" class="status" role="status"></p>
+  <div data-tool-share></div>
+</main>
+
+<script src="https://katsuan.github.io/line-share/shared/oqrn.js"></script>
+<script src="https://katsuan.github.io/line-share/shared/ui.js" defer></script>
+<script type="module" src="app.js?v=202610231"></script>
+<script src="https://katsuan.github.io/line-share/shared/tool-share.js" data-tool="yuqsaki" defer></script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});</script>
+</body>
+</html>
