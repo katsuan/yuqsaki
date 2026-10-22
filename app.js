@@ -354,7 +354,8 @@ function planUrl(t, it) {
   if (it.place) q.set("location", it.place);
   q.set("mapUrl", mapUrl(it.place || it.title));
   if (it.memo) q.set("details", it.memo);
-  return window.OQRN ? `${window.OQRN.top}/plan/?${q}` : "#";
+  // 空白は %20 で（liff.line.me を通ると「+」がそのまま残るため。OQRN.cardUrl と同じ）
+  return window.OQRN ? `${window.OQRN.top}/plan/?${String(q).replace(/\+/g, "%20")}` : "#";
 }
 
 // ---- 持ち物 ----
