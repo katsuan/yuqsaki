@@ -8,6 +8,21 @@ const KEY = "yuqsaki:v1";
 export const MAX_DAYS = 14;
 export const MAX_ITEMS = 120;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
+// id は画面のボタンにも入れるので、英数字だけ（ちがう形なら新しく作る。共有リンクで受けとった中身も同じ）
+const ID = /^[a-z0-9]{4,20}$/;
+const cleanId = (v) => (ID.test(String(v ?? "")) ? String(v) : newId());
+export const MAX_TRIPS = 50;
+export const MAX_IMPORT_BYTES = 2 * 1024 * 1024; // 控えのファイルは 2MB まで
+
+// 同じ id が重なったら、あとのほうを新しくする
+function uniqueIds(list) {
+  const seen = new Set();
+  list.forEach((x) => {
+    if (seen.has(x.id)) x.id = newId();
+    seen.add(x.id);
+  });
+  return list;
+}
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export function newId() {
@@ -22,7 +37,7 @@ const str = (v, n) => String(v ?? "").trim().slice(0, n);
 
 export function cleanItem(it, days) {
   return {
-    id: str(it.id, 20) || newId(),
+    id: cleanId(it.id),
     day: Math.min(Math.max(0, Math.floor(Number(it.day) || 0)), Math.max(0, days - 1)),
     time: TIME.test(it.time) ? it.time : "",
     kind: str(it.kind, 8) || "📍",
@@ -41,13 +56,13 @@ export function cleanTrip(t) {
   if (dayCount(start, end) > MAX_DAYS) end = addDays(start, MAX_DAYS - 1);
   const days = dayCount(start, end);
   return {
-    id: str(t.id, 20) || newId(),
+    id: cleanId(t.id),
     title: str(t.title, 30) || "たびのしおり",
     emoji: str(t.emoji, 8) || "🧳",
     start,
     end,
-    items: (Array.isArray(t.items) ? t.items : []).filter((it) => it && str(it.title, 40)).map((it) => cleanItem(it, days)).slice(0, MAX_ITEMS),
-    bring: (Array.isArray(t.bring) ? t.bring : []).filter((b) => b && str(b.name, 30)).map((b) => ({ id: str(b.id, 20) || newId(), name: str(b.name, 30), done: b.done === true })).slice(0, 80),
+    items: uniqueIds((Array.isArray(t.items) ? t.items : []).filter((it) => it && typeof it === "object" && str(it.title, 40)).slice(0, MAX_ITEMS).map((it) => cleanItem(it, days))),
+    bring: uniqueIds((Array.isArray(t.bring) ? t.bring : []).filter((b) => b && typeof b === "object" && str(b.name, 30)).slice(0, 80).map((b) => ({ id: cleanId(b.id), name: str(b.name, 30), done: b.done === true }))),
     upd: Number(t.upd) || Date.now()
   };
 }
@@ -55,7 +70,7 @@ export function cleanTrip(t) {
 function clean(raw) {
   const s = blank();
   if (!raw || typeof raw !== "object") return s;
-  s.trips = (Array.isArray(raw.trips) ? raw.trips : []).map(cleanTrip).filter(Boolean);
+  s.trips = uniqueIds((Array.isArray(raw.trips) ? raw.trips : []).slice(0, MAX_TRIPS).map(cleanTrip).filter(Boolean));
   s.current = s.trips.some((t) => t.id === raw.current) ? raw.current : s.trips[0]?.id || null;
   return s;
 }
@@ -169,11 +184,13 @@ export function exportJson(state) {
 }
 
 export function importJson(state, text) {
+  if (String(text).length > MAX_IMPORT_BYTES) throw new Error("too large");
   const incoming = clean(JSON.parse(text));
   let added = 0;
   incoming.trips.forEach((t) => {
     const i = state.trips.findIndex((x) => x.id === t.id);
     if (i < 0) {
+      if (state.trips.length >= MAX_TRIPS) return;
       state.trips.push(t);
       added++;
     } else if (t.upd > state.trips[i].upd) {

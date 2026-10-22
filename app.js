@@ -1,9 +1,9 @@
 // ゆくさき（YuQsaki）：画面の操作。しおりはこの端末の中だけ（js/store.js）、リンクに詰めて渡す（js/share.js）
 import {
-  MAX_DAYS, MAX_ITEMS, addDays, addTrip, cleanItem, currentTrip, dayCount, exportJson, importJson, itemsOf, label,
+  MAX_DAYS, MAX_IMPORT_BYTES, MAX_ITEMS, addDays, addTrip, cleanItem, currentTrip, dayCount, exportJson, importJson, itemsOf, label,
   load, newId, receiveTrip, removeTrip, restoreTrip, save, stayLabel, touch, updateTrip, ymd
-} from "./js/store.js?v=202610231";
-import { packTrip, unpackTrip } from "./js/share.js?v=202610231";
+} from "./js/store.js?v=202610222353";
+import { packTrip, unpackTrip } from "./js/share.js?v=202610222353";
 
 const $ = (id) => document.getElementById(id);
 const PAGE_URL = "https://katsuan.github.io/yuqsaki/";
@@ -178,9 +178,9 @@ function renderHead(t) {
   const today = ymd();
   const until = dayCount(today, t.start) - 1;
   $("vCount").className = "count";
-  if (today < t.start) $("vCount").innerHTML = `あと<b>${until}</b>日`;
+  if (today < t.start) $("vCount").innerHTML = `あと<b>${until}</b>日`; // qcheck-ok: W1 数だけ
   else if (today <= t.end) {
-    $("vCount").innerHTML = `<b>${dayCount(t.start, today)}</b>日目`;
+    $("vCount").innerHTML = `<b>${dayCount(t.start, today)}</b>日目`; // qcheck-ok: W1 数だけ
     $("vCount").classList.add("is-now");
   } else {
     $("vCount").textContent = "おかえり";
@@ -500,6 +500,7 @@ $("importFile").addEventListener("change", async (e) => {
   const file = e.target.files[0];
   e.target.value = "";
   if (!file) return;
+  if (file.size > MAX_IMPORT_BYTES) return say("ファイルが大きすぎます（ゆくさきで書き出した控えか確かめてください）");
   try {
     const added = importJson(state, await file.text());
     persist();

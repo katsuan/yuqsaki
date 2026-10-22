@@ -12,9 +12,31 @@ const dec = (text) => {
   return Uint8Array.from(b, (c) => c.charCodeAt(0));
 };
 
-async function pipe(bytes, stream) {
-  const out = new Blob([bytes]).stream().pipeThrough(stream);
-  return new Uint8Array(await new Response(out).arrayBuffer());
+// リンクの長さと、広げたあとの大きさの上限（小さなリンクが大きくふくらむ細工で、端末が止まらないように）
+export const MAX_LINK_CHARS = 60000;
+export const MAX_UNPACKED_BYTES = 512 * 1024;
+
+async function pipe(bytes, stream, limit = Infinity) {
+  const reader = new Blob([bytes]).stream().pipeThrough(stream).getReader();
+  const chunks = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.length;
+    if (size > limit) {
+      reader.cancel().catch(() => {});
+      throw new Error("too large");
+    }
+    chunks.push(value);
+  }
+  const out = new Uint8Array(size);
+  let at = 0;
+  chunks.forEach((c) => {
+    out.set(c, at);
+    at += c.length;
+  });
+  return out;
 }
 
 // 送るときは、済みのしるし（done）は外す（受けとった人は、まっさらで使う）
@@ -40,8 +62,11 @@ export async function packTrip(trip) {
 }
 
 export async function unpackTrip(text) {
+  if (typeof text !== "string" || text.length > MAX_LINK_CHARS) throw new Error("too long");
   const kind = text[0];
+  if (kind !== "z" && kind !== "j") throw new Error("bad kind");
   const body = dec(text.slice(1));
-  const bytes = kind === "z" ? await pipe(body, new DecompressionStream("deflate-raw")) : body;
+  const bytes = kind === "z" ? await pipe(body, new DecompressionStream("deflate-raw"), MAX_UNPACKED_BYTES) : body;
+  if (bytes.length > MAX_UNPACKED_BYTES) throw new Error("too large");
   return JSON.parse(new TextDecoder().decode(bytes));
 }
