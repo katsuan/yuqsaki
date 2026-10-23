@@ -2,8 +2,8 @@
 import {
   MAX_BRING, MAX_DAYS, MAX_IMPORT_BYTES, MAX_ITEMS, addDays, addTrip, cleanItem, currentTrip, dayCount, exportJson, importJson, itemsOf, label,
   load, newId, rangeLabel, receiveTrip, removeTrip, restoreTrip, save, stayLabel, str, touch, updateTrip, ymd
-} from "./js/store.js?v=202610230136";
-import { packTrip, unpackTrip } from "./js/share.js?v=202610230136";
+} from "./js/store.js?v=202610230932";
+import { packTrip, unpackTrip } from "./js/share.js?v=202610230932";
 
 const $ = (id) => document.getElementById(id);
 const PAGE_URL = "https://katsuan.github.io/yuqsaki/";
