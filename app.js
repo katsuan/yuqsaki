@@ -1,9 +1,9 @@
 // ゆくさき（YuQsaki）：画面の操作。しおりはこの端末の中だけ（js/store.js）、リンクに詰めて渡す（js/share.js）
 import {
-  MAX_DAYS, MAX_IMPORT_BYTES, MAX_ITEMS, addDays, addTrip, cleanItem, currentTrip, dayCount, exportJson, importJson, itemsOf, label,
-  load, newId, receiveTrip, removeTrip, restoreTrip, save, stayLabel, touch, updateTrip, ymd
-} from "./js/store.js?v=202610222353";
-import { packTrip, unpackTrip } from "./js/share.js?v=202610222353";
+  MAX_BRING, MAX_DAYS, MAX_IMPORT_BYTES, MAX_ITEMS, addDays, addTrip, cleanItem, currentTrip, dayCount, exportJson, importJson, itemsOf, label,
+  load, newId, rangeLabel, receiveTrip, removeTrip, restoreTrip, save, stayLabel, str, touch, updateTrip, ymd
+} from "./js/store.js?v=202610230136";
+import { packTrip, unpackTrip } from "./js/share.js?v=202610230136";
 
 const $ = (id) => document.getElementById(id);
 const PAGE_URL = "https://katsuan.github.io/yuqsaki/";
@@ -91,8 +91,9 @@ function openTripForm(mode) {
   $("tTitle").value = t?.title || "";
   ui.tEmoji = t?.emoji || TRIP_EMOJIS[0];
   const start = t?.start || addDays(ymd(), 7);
-  $("tStart").value = start;
+  $("tStart").value = $("tStart").dataset.prev = start;
   $("tEnd").value = t?.end || addDays(start, 1);
+  $("tTitleError").hidden = true;
   render();
   $("tripForm").scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -102,7 +103,7 @@ function renderTripForm() {
   $("tripForm").hidden = !open;
   if (!open) return;
   if (!ui.tripForm && !$("tStart").value) {
-    $("tStart").value = addDays(ymd(), 7);
+    $("tStart").value = $("tStart").dataset.prev = addDays(ymd(), 7);
     $("tEnd").value = addDays(ymd(), 8);
   }
   $("tripFormHeading").textContent = ui.tripForm === "edit" ? "名前・日にちを直す" : "しおりを作る";
@@ -118,7 +119,8 @@ function renderStay() {
   if (!s || !e) return ($("tStay").textContent = "");
   if (e < s) return ($("tStay").textContent = "⚠️ 帰る日が、行く日より前になっています");
   const n = dayCount(s, e);
-  $("tStay").textContent = n > MAX_DAYS ? `⚠️ ${MAX_DAYS}日までにしてください` : `${label(s)} 〜 ${label(e)}　${n === 1 ? "日帰り" : `${n - 1}泊${n}日`}`;
+  const t = { start: s, end: e };
+  $("tStay").textContent = n > MAX_DAYS ? `⚠️ ${MAX_DAYS}日までにしてください` : `${rangeLabel(t)}　${stayLabel(t)}`;
 }
 
 $("tEmojis").addEventListener("click", (e) => {
@@ -140,15 +142,14 @@ $("tStart").addEventListener("change", () => {
 });
 $("tStart").addEventListener("focus", () => ($("tStart").dataset.prev = $("tStart").value));
 $("tEnd").addEventListener("change", renderStay);
+$("tTitle").addEventListener("input", () => ($("tTitleError").hidden = true));
 
 $("tSave").addEventListener("click", () => {
   const title = $("tTitle").value.trim();
   const start = $("tStart").value;
   const end = $("tEnd").value;
-  if (!title) {
-    say("行き先・名前を入れてください");
-    return $("tTitle").focus();
-  }
+  $("tTitleError").hidden = !!title;
+  if (!title) return $("tTitle").focus();
   if (!start || !end || end < start || dayCount(start, end) > MAX_DAYS) return say("日にちを確かめてください");
   if (ui.tripForm === "edit") {
     const t = currentTrip(state);
@@ -174,7 +175,15 @@ $("editTrip").addEventListener("click", () => openTripForm("edit"));
 function renderHead(t) {
   $("vEmoji").textContent = t.emoji;
   $("vTitle").textContent = t.title;
-  $("vDates").textContent = t.start === t.end ? `${label(t.start)}　日帰り` : `${label(t.start)} 〜 ${label(t.end)}　${stayLabel(t)}`;
+  // 日付・泊数のかたまりごとに折り返す
+  const parts = t.start === t.end ? [label(t.start), stayLabel(t)] : [label(t.start), `〜 ${label(t.end)}`, stayLabel(t)];
+  $("vDates").replaceChildren(
+    ...parts.flatMap((text, i) => {
+      const span = document.createElement("span");
+      span.textContent = text;
+      return i ? [" ", span] : [span];
+    })
+  );
   const today = ymd();
   const until = dayCount(today, t.start) - 1;
   $("vCount").className = "count";
@@ -239,6 +248,7 @@ $("timeline").addEventListener("click", (e) => {
   const done = e.target.closest("[data-done]");
   if (done) {
     const it = t.items.find((x) => x.id === done.dataset.done);
+    if (!it) return render();
     it.done = !it.done;
     persist();
     return render();
@@ -257,6 +267,7 @@ function openItemForm(it) {
   $("iTitle").value = it?.title || "";
   $("iPlace").value = it?.place || "";
   $("iMemo").value = it?.memo || "";
+  $("iTitleError").hidden = true;
   const n = dayCount(t.start, t.end);
   $("iDay").innerHTML = Array.from({ length: n }, (_, i) => `<option value="${i}">${i + 1}日目 ${label(addDays(t.start, i)).replace(/（.）/, "")}</option>`).join("");
   $("iDay").value = it ? it.day : ui.day;
@@ -293,6 +304,7 @@ $("iKinds").addEventListener("click", (e) => {
   ui.kind = b.dataset.kind;
   renderItemForm(currentTrip(state));
 });
+$("iTitle").addEventListener("input", () => ($("iTitleError").hidden = true));
 $("iCancel").addEventListener("click", () => {
   closeItemForm();
   render();
@@ -301,17 +313,16 @@ $("iCancel").addEventListener("click", () => {
 $("iSave").addEventListener("click", () => {
   const t = currentTrip(state);
   const title = $("iTitle").value.trim();
-  if (!title) {
-    say("予定を入れてください");
-    return $("iTitle").focus();
-  }
+  $("iTitleError").hidden = !!title;
+  if (!title) return $("iTitle").focus();
   const fields = { day: Number($("iDay").value), time: $("iTime").value, kind: ui.kind, title, place: $("iPlace").value, memo: $("iMemo").value };
   const n = dayCount(t.start, t.end);
-  if (ui.editing) {
-    const it = t.items.find((x) => x.id === ui.editing);
-    Object.assign(it, cleanItem({ ...it, ...fields }, n));
+  const editing = ui.editing && t.items.find((x) => x.id === ui.editing);
+  if (editing) {
+    Object.assign(editing, cleanItem({ ...editing, ...fields }, n));
     say(`✏️ 「${title}」を直しました`);
   } else {
+    if (t.items.length >= MAX_ITEMS) return say(`予定は ${MAX_ITEMS} 件までです`);
     const it = cleanItem({ ...fields, id: newId() }, n);
     t.items.push(it);
     ui.justAdded = it.id;
@@ -377,24 +388,24 @@ function renderBring(t) {
   $("bClear").hidden = !done;
 }
 
-function addBring(name) {
+function addBring(text) {
   const t = currentTrip(state);
-  name = name.trim().slice(0, 30);
+  const name = str(text, 30);
   if (!name || t.bring.some((b) => b.name === name)) return;
+  // 上限をこえると、次に開いたときに消えてしまうので、ここで止める
+  if (t.bring.length >= MAX_BRING) return say(`持ち物は ${MAX_BRING} こまでです`);
   t.bring.push({ id: newId(), name, done: false });
   touch(t);
   persist();
   render();
 }
-$("bAdd").addEventListener("click", () => {
+function addBringFromInput() {
   addBring($("bName").value);
   $("bName").value = "";
-});
+}
+$("bAdd").addEventListener("click", addBringFromInput);
 $("bName").addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !e.isComposing) {
-    addBring($("bName").value);
-    $("bName").value = "";
-  }
+  if (e.key === "Enter" && !e.isComposing) addBringFromInput();
 });
 $("bIdeas").addEventListener("click", (e) => {
   const b = e.target.closest("[data-bidea]");
@@ -403,8 +414,8 @@ $("bIdeas").addEventListener("click", (e) => {
 $("bringList").addEventListener("change", (e) => {
   const box = e.target.closest("[data-bring]");
   if (!box) return;
-  const t = currentTrip(state);
-  t.bring.find((b) => b.id === box.dataset.bring).done = box.checked;
+  const b = currentTrip(state).bring.find((x) => x.id === box.dataset.bring);
+  if (b) b.done = box.checked;
   persist();
   render();
 });
@@ -413,6 +424,7 @@ $("bringList").addEventListener("click", (e) => {
   if (!del) return;
   const t = currentTrip(state);
   const i = t.bring.findIndex((b) => b.id === del.dataset.bdel);
+  if (i < 0) return render();
   const [b] = t.bring.splice(i, 1);
   touch(t);
   persist();
@@ -430,8 +442,12 @@ $("bClear").addEventListener("click", () => {
 });
 
 // ---- みんなに渡す ----
+// 詰めるのは非同期なので、あとから始めたものだけを使う（古い中身のリンクで上書きしない）
+let shareSeq = 0;
 async function renderShare(t) {
+  const seq = ++shareSeq;
   const packed = await packTrip(t);
+  if (seq !== shareSeq) return;
   ui.shareUrl = `${PAGE_URL}#s=${packed}`;
   const lines = Array.from({ length: dayCount(t.start, t.end) }, (_, i) => {
     const names = itemsOf(t, i).map((it) => `${it.time ? it.time + " " : ""}${it.title}`);
@@ -442,9 +458,9 @@ async function renderShare(t) {
   const params = new URLSearchParams({
     headerTitle: `${t.emoji} 旅のしおり`,
     title: t.title,
-    date: t.start === t.end ? label(t.start) : `${label(t.start)} 〜 ${label(t.end)}`,
+    date: rangeLabel(t),
     showDate: "true",
-    detail: (lines.join("\n\n") || "予定はこれから").slice(0, 300),
+    detail: str(lines.join("\n\n"), 300) || "予定はこれから",
     theme: "custom",
     customColor: CARD_COLOR,
     showAction: "true",
@@ -460,7 +476,7 @@ async function renderShare(t) {
 $("shareBtn").addEventListener("click", async () => {
   const t = currentTrip(state);
   if (!ui.shareUrl) await renderShare(t);
-  const text = `${t.emoji} ${t.title}（${label(t.start)}${t.start === t.end ? "" : ` 〜 ${label(t.end)}`}）のしおり`;
+  const text = `${t.emoji} ${t.title}（${rangeLabel(t)}）のしおり`;
   if (navigator.share) {
     try {
       await navigator.share({ title: text, text, url: ui.shareUrl });
@@ -531,29 +547,17 @@ async function receiveFromHash() {
   if (!m) return;
   history.replaceState(null, "", location.pathname + location.search);
   try {
-    const incoming = await unpackTrip(m[1]);
-    const mine = state.trips.find((t) => t.id === incoming.id);
-    // 自分の端末のほうが新しければ、上書きしない（自分で直したばかりなど）
-    if (mine && mine.upd >= Number(incoming.upd)) {
-      state.current = mine.id;
-      persist();
-      render();
-      say(`📩 「${mine.title}」は、この端末のほうが新しいので、そのまま開きました`);
-      return;
-    }
     const snap = JSON.stringify(state);
-    const got = receiveTrip(state, incoming);
+    const got = receiveTrip(state, await unpackTrip(m[1]));
     if (!got) throw new Error("bad");
-    // 済み・持ち物のチェックは自分のものを残す
-    if (got.before) {
-      const doneItems = new Set(got.before.items.filter((x) => x.done).map((x) => x.id));
-      const doneBring = new Set(got.before.bring.filter((x) => x.done).map((x) => x.id));
-      got.trip.items.forEach((x) => (x.done = doneItems.has(x.id)));
-      got.trip.bring.forEach((x) => (x.done = doneBring.has(x.id)));
-    }
+    if (got.full) return say("しおりがいっぱいです。使わないしおりを消してから、もう一度リンクを開いてください");
     ui.day = todayIndex(got.trip);
+    closeItemForm();
+    ui.tripForm = null;
     persist();
     render();
+    // 自分の端末のほうが新しければ、上書きしない（自分で直したばかりなど）
+    if (got.kept) return say(`📩 「${got.trip.title}」は、この端末のほうが新しいので、そのまま開きました`);
     say(got.before ? `📩 「${got.trip.title}」を新しい内容にしました` : `📩 「${got.trip.title}」のしおりを受けとりました`, () => {
       state = JSON.parse(snap);
       persist();
@@ -580,6 +584,15 @@ function render() {
 }
 
 window.addEventListener("hashchange", receiveFromHash);
+// 日付をまたいで開きっぱなしでも、「あと○日」「○日目」「きょう」を今日に
+let shownDay = ymd();
+const refreshDay = () => {
+  if (ymd() === shownDay) return;
+  shownDay = ymd();
+  render();
+};
+document.addEventListener("visibilitychange", () => document.visibilityState === "visible" && refreshDay());
+setInterval(refreshDay, 30000);
 const first = currentTrip(state);
 if (first) ui.day = todayIndex(first);
 render();

@@ -7,7 +7,14 @@
 const KEY = "yuqsaki:v1";
 export const MAX_DAYS = 14;
 export const MAX_ITEMS = 120;
-const DATE = /^\d{4}-\d{2}-\d{2}$/;
+export const MAX_BRING = 80;
+// "YYYY-MM-DD" の形で、ほんとうにある日か（2月30日・13月などは false）
+export function isDate(text) {
+  if (typeof text !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(text)) return false;
+  const [y, m, d] = text.split("-").map(Number);
+  const t = new Date(Date.UTC(y, m - 1, d));
+  return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d;
+}
 // id は画面のボタンにも入れるので、英数字だけ（ちがう形なら新しく作る。共有リンクで受けとった中身も同じ）
 const ID = /^[a-z0-9]{4,20}$/;
 const cleanId = (v) => (ID.test(String(v ?? "")) ? String(v) : newId());
@@ -33,7 +40,11 @@ function blank() {
   return { v: 1, trips: [], current: null };
 }
 
-const str = (v, n) => String(v ?? "").trim().slice(0, n);
+// 文字を n 字（UTF-16）までに切る。絵文字が半分に切れて残らないように
+export function str(v, n) {
+  const s = String(v ?? "").trim().slice(0, n);
+  return /[\uD800-\uDBFF]$/.test(s) ? s.slice(0, -1) : s;
+}
 
 export function cleanItem(it, days) {
   return {
@@ -50,9 +61,9 @@ export function cleanItem(it, days) {
 
 export function cleanTrip(t) {
   if (!t || typeof t !== "object") return null;
-  const start = DATE.test(t.start) ? t.start : null;
+  const start = isDate(t.start) ? t.start : null;
   if (!start) return null;
-  let end = DATE.test(t.end) && t.end >= start ? t.end : start;
+  let end = isDate(t.end) && t.end >= start ? t.end : start;
   if (dayCount(start, end) > MAX_DAYS) end = addDays(start, MAX_DAYS - 1);
   const days = dayCount(start, end);
   return {
@@ -62,7 +73,7 @@ export function cleanTrip(t) {
     start,
     end,
     items: uniqueIds((Array.isArray(t.items) ? t.items : []).filter((it) => it && typeof it === "object" && str(it.title, 40)).slice(0, MAX_ITEMS).map((it) => cleanItem(it, days))),
-    bring: uniqueIds((Array.isArray(t.bring) ? t.bring : []).filter((b) => b && typeof b === "object" && str(b.name, 30)).slice(0, 80).map((b) => ({ id: cleanId(b.id), name: str(b.name, 30), done: b.done === true }))),
+    bring: uniqueIds((Array.isArray(t.bring) ? t.bring : []).filter((b) => b && typeof b === "object" && str(b.name, 30)).slice(0, MAX_BRING).map((b) => ({ id: cleanId(b.id), name: str(b.name, 30), done: b.done === true }))),
     upd: Number(t.upd) || Date.now()
   };
 }
@@ -113,6 +124,10 @@ export function dayCount(start, end) {
 export function label(s) {
   const d = toDate(s);
   return `${d.getMonth() + 1}/${d.getDate()}（${WEEK[d.getDay()]}）`;
+}
+// 「11/1（日）」「11/1（日） 〜 11/3（火）」
+export function rangeLabel(t) {
+  return t.start === t.end ? label(t.start) : `${label(t.start)} 〜 ${label(t.end)}`;
 }
 // 「2泊3日」「日帰り」
 export function stayLabel(t) {
@@ -166,14 +181,28 @@ export function itemsOf(trip, day) {
 }
 
 // ---- 受けとったしおり ----
-// 同じしおり（id）がこの端末にあれば、新しいほうで上書き。戻すための控えを返す
+// 同じしおり（id）がこの端末にあれば、届いたほうが新しいときだけ上書き（済み・持ち物のチェックは自分のものを残す）
+// 返すもの：{ trip, before }（before＝上書きする前のしおり。なければ null）／{ trip, kept: true }（この端末のほうが新しい）
+//          ／{ full: true }（しおりがいっぱい）／null（読めない）
 export function receiveTrip(state, incoming) {
   const t = cleanTrip(incoming);
   if (!t) return null;
   const i = state.trips.findIndex((x) => x.id === t.id);
   const before = i >= 0 ? state.trips[i] : null;
-  if (before) state.trips[i] = t;
-  else state.trips.unshift(t);
+  if (before && before.upd >= t.upd) {
+    state.current = before.id;
+    return { trip: before, kept: true };
+  }
+  if (before) {
+    const doneItems = new Set(before.items.filter((x) => x.done).map((x) => x.id));
+    const doneBring = new Set(before.bring.filter((x) => x.done).map((x) => x.id));
+    t.items.forEach((x) => (x.done = doneItems.has(x.id)));
+    t.bring.forEach((x) => (x.done = doneBring.has(x.id)));
+    state.trips[i] = t;
+  } else {
+    if (state.trips.length >= MAX_TRIPS) return { full: true };
+    state.trips.unshift(t);
+  }
   state.current = t.id;
   return { trip: t, before };
 }

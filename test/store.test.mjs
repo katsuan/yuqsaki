@@ -70,3 +70,55 @@ test("書き出した控えを読みこむと、同じしおりに戻る", () =>
   importJson(b, exportJson(a));
   assert.deepEqual(b.trips, a.trips);
 });
+
+test("ない日付（2月30日など）のしおりは捨てる。うるう日はそのまま", async () => {
+  const { cleanTrip, dayCount, stayLabel } = await import("../js/store.js");
+  assert.equal(cleanTrip(trip({ start: "2026-02-30", end: "2026-03-02" })), null);
+  assert.equal(cleanTrip(trip({ start: "2026-13-01" })), null);
+  assert.equal(cleanTrip(trip({ start: "2026-02-27", end: "2026-02-30" })).end, "2026-02-27");
+  const leap = cleanTrip(trip({ start: "2028-02-28", end: "2028-03-01" }));
+  assert.equal(dayCount(leap.start, leap.end), 3);
+  assert.equal(stayLabel(leap), "2泊3日");
+  assert.equal(dayCount("2026-12-31", "2027-01-01"), 2); // 年をまたぐ
+});
+
+test("リンクで受けとったとき：自分の済みのしるしは残し、自分のほうが新しければ上書きしない", () => {
+  const state = { v: 1, trips: [], current: null };
+  receiveTrip(state, trip({ upd: 10 }));
+  state.trips[0].items[0].done = true;
+  state.trips[0].bring[0].done = true;
+  // 新しい内容が届いた
+  const got = receiveTrip(state, trip({ upd: 20, title: "沖縄2" }));
+  assert.equal(got.trip.title, "沖縄2");
+  assert.ok(got.before);
+  assert.equal(got.trip.items[0].done, true);
+  assert.equal(got.trip.bring[0].done, true);
+  // 古い内容が届いても、この端末のほうを残す
+  const old = receiveTrip(state, trip({ upd: 5, title: "古い" }));
+  assert.equal(old.kept, true);
+  assert.equal(state.trips[0].title, "沖縄2");
+  assert.equal(state.trips.length, 1);
+});
+
+test("しおりがいっぱいのときは、リンクで受けとっても上限をこえない", () => {
+  const state = { v: 1, trips: [], current: null };
+  importJson(state, JSON.stringify({ trips: Array.from({ length: MAX_TRIPS }, (_, i) => trip({ id: `t${1000 + i}` })) }));
+  const got = receiveTrip(state, trip({ id: "newtrip1" }));
+  assert.equal(got.full, true);
+  assert.equal(state.trips.length, MAX_TRIPS);
+  // すでにあるしおりの上書きはできる
+  assert.ok(receiveTrip(state, trip({ id: "t1000", upd: 99, title: "上書き" })).before);
+});
+
+test("長い文字を切っても、絵文字が半分にならない", async () => {
+  const { cleanTrip } = await import("../js/store.js");
+  const t = cleanTrip(trip({ title: "あ".repeat(29) + "🌺", emoji: "abcdefg🌺" }));
+  assert.equal(t.title, "あ".repeat(29));
+  assert.equal(t.emoji, "abcdefg");
+});
+
+test("日にちの書き方（日帰り・泊まり・年をまたぐ）", async () => {
+  const { rangeLabel } = await import("../js/store.js");
+  assert.equal(rangeLabel({ start: "2026-11-01", end: "2026-11-01" }), "11/1（日）");
+  assert.equal(rangeLabel({ start: "2026-12-31", end: "2027-01-02" }), "12/31（木） 〜 1/2（土）");
+});

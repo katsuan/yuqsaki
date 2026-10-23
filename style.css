@@ -52,6 +52,7 @@ textarea.ls-input { resize: vertical; font-size: 16px; line-height: 1.5; }
 .trip-emoji { font-size: 34px; line-height: 1; }
 .trip-title h2 { margin: 0; overflow: hidden; font-size: 20px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
 .trip-title p { margin: 2px 0 0; color: var(--ls-subtext); font-size: 13px; font-weight: 700; }
+.trip-title p span { white-space: nowrap; } /* 「3/1（水）」「2泊3日」を途中で折り返さない */
 .count { display: grid; place-items: center; min-width: 64px; padding: 6px 10px; border-radius: 14px; background: var(--ls-accent-soft); color: var(--ls-accent-ink); font-size: 12px; font-weight: 800; white-space: nowrap; }
 .count b { font-size: 22px; line-height: 1.1; }
 .count.is-now { background: #fff1d6; color: #a2600a; }

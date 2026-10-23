@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://katsuan.github.io/line-share/shared/ui.css">
-<link rel="stylesheet" href="style.css?v=202610222353">
+<link rel="stylesheet" href="style.css?v=202610230136">
 </head>
 <body>
 <main class="ls-page ls-stack">
@@ -47,6 +47,7 @@
       <span class="ls-label">行き先・名前</span>
       <input id="tTitle" class="ls-input" maxlength="30" placeholder="例：沖縄 家族旅行" autocomplete="off" enterkeyhint="done">
     </label>
+    <p id="tTitleError" class="ls-hint is-error" role="alert" hidden>行き先・名前を入れてね</p>
     <div class="ls-field">
       <span class="ls-label">しるし</span>
       <div id="tEmojis" class="emojis" role="radiogroup" aria-label="しるし"></div>
@@ -98,6 +99,7 @@
           <span class="ls-label">予定</span>
           <input id="iTitle" class="ls-input" maxlength="40" placeholder="例：美ら海水族館" autocomplete="off" enterkeyhint="next">
         </label>
+        <p id="iTitleError" class="ls-hint is-error" role="alert" hidden>予定を入れてね</p>
         <label class="ls-field">
           <span class="ls-label">場所（地図で開く。なければ予定の名前で探す）</span>
           <input id="iPlace" class="ls-input" maxlength="80" placeholder="例：沖縄美ら海水族館" autocomplete="off" enterkeyhint="next">
@@ -160,7 +162,7 @@
 
 <script src="https://katsuan.github.io/line-share/shared/oqrn.js"></script>
 <script src="https://katsuan.github.io/line-share/shared/ui.js" defer></script>
-<script type="module" src="app.js?v=202610222353"></script>
+<script type="module" src="app.js?v=202610230136"></script>
 <script src="https://katsuan.github.io/line-share/shared/tool-share.js" data-tool="yuqsaki" defer></script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});</script>
 </body>
