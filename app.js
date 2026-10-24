@@ -2,8 +2,8 @@
 import {
   MAX_BRING, MAX_DAYS, MAX_IMPORT_BYTES, MAX_ITEMS, addDays, addTrip, cleanItem, currentTrip, dayCount, exportJson, importJson, itemsOf, label,
   load, newId, rangeLabel, receiveTrip, removeTrip, restoreTrip, save, stayLabel, str, touch, updateTrip, ymd
-} from "./js/store.js?v=202610230932";
-import { packTrip, unpackTrip } from "./js/share.js?v=202610230932";
+} from "./js/store.js?v=202610241328";
+import { packTrip, unpackTrip } from "./js/share.js?v=202610241328";
 
 const $ = (id) => document.getElementById(id);
 const PAGE_URL = "https://katsuan.github.io/yuqsaki/";
@@ -42,6 +42,9 @@ const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 function persist() {
   if (!save(state)) say("この端末に残せませんでした（プライベートブラウズでは、閉じると消えます）");
 }
+
+// 季節の絵文字をときどき文の後ろに（Q キットの season.js。まだ読めていなければ、そのまま）
+const cheer = (text) => (window.QSeason ? window.QSeason.decorate(text) : text);
 
 function say(text, undo) {
   if (window.LineShareUI?.toast) {
@@ -159,7 +162,7 @@ $("tSave").addEventListener("click", () => {
   } else {
     addTrip(state, { title, emoji: ui.tEmoji, start, end });
     ui.day = 0;
-    say(`🧳 「${title}」のしおりを作りました。予定を足していきましょう`);
+    say(cheer(`🧳 「${title}」のしおりを作りました。予定を足していきましょう`));
   }
   ui.tripForm = null;
   persist();
