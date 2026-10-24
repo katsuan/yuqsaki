@@ -15,7 +15,6 @@
   --ls-font: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", system-ui, sans-serif;
 
   --ls-tabs-bg: #dcf0f2;
-  --line-green: #06c755;
   --sun: #f4a62a;
 }
 
@@ -104,10 +103,8 @@ textarea.ls-input { resize: vertical; font-size: 16px; line-height: 1.5; }
 .kind-chip small { font-size: 11px; font-weight: 700; }
 .item-more { display: grid; gap: 6px; }
 .item-more[hidden] { display: none; }
-.item-more .ls-button small, .ls-button.line small { font-size: 12px; opacity: 0.85; }
 .sub-title { margin: 6px 0 0; padding-top: 10px; border-top: 1px dashed var(--ls-line); font-size: 14px; font-weight: 800; }
 
-.ls-button.line { gap: 4px; border-color: var(--line-green); background: var(--line-green); color: #fff; }
 
 /* 持ち物 */
 .bring-list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
