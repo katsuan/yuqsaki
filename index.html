@@ -25,8 +25,8 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://katsuan.github.io/line-share/shared/ui.css">
-<link rel="stylesheet" href="style.css?v=202610241328">
+<link rel="stylesheet" href="https://katsuan.github.io/line-share/shared/ui.css?v=202610242337">
+<link rel="stylesheet" href="style.css?v=202610241438">
 </head>
 <body>
 <main class="ls-page ls-stack">
@@ -112,7 +112,7 @@
           <button id="iCancel" class="ls-button is-block" type="button">やめる</button>
         </div>
         <div id="iMore" class="item-more" hidden>
-          <a id="iOqrn" class="ls-button is-block" href="#">💬 この予定をカードで送る<small>（おくるん）</small></a>
+          <a id="iOqrn" class="ls-button is-block is-oqrn" href="#">この予定をカードで送る</a>
           <button id="iDelete" class="link danger" type="button">この予定を消す</button>
         </div>
       </div>
@@ -123,7 +123,7 @@
       <h2 id="sendTitle" class="ls-panel-title">📤 みんなに渡す</h2>
       <p class="ls-hint">しおりの中身をまるごとリンクに入れて渡します。受けとった人は、開くだけで同じしおりが見られます（その人の端末に入ります）。直したら、もう一度送ってください。</p>
       <button id="shareBtn" class="ls-button is-primary is-block" type="button">🔗 しおりのリンクを送る</button>
-      <a id="cardBtn" class="ls-button is-block line" href="#">💬 カードで送る<small>（おくるん）</small></a>
+      <a id="cardBtn" class="ls-button is-block line is-oqrn" href="#">カードで送る</a>
       <p id="cardNote" class="ls-hint small" hidden></p>
     </section>
 
@@ -161,7 +161,7 @@
 
 <script src="https://katsuan.github.io/line-share/shared/oqrn.js"></script>
 <script src="https://katsuan.github.io/line-share/shared/ui.js" defer></script>
-<script type="module" src="app.js?v=202610241328"></script>
+<script type="module" src="app.js?v=202610241438"></script>
 <script src="https://katsuan.github.io/line-share/shared/tool-share.js" data-tool="yuqsaki" defer></script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});</script>
 </body>
