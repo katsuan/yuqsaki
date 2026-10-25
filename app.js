@@ -1,16 +1,12 @@
-// ゆくさき（YuQsaki）：画面の操作。しおりはこの端末の中だけ（js/store.js）、リンクに詰めて渡す（js/share.js）
+// ゆくさき（YuQsaki）：画面の操作。しおりはこの端末の中だけ（js/store.js）、リンクに詰めて渡す（js/link.js）、送るカードは js/card.js
 import {
   MAX_BRING, MAX_DAYS, MAX_IMPORT_BYTES, MAX_ITEMS, addDays, addTrip, cleanItem, currentTrip, dayCount, exportJson, importJson, itemsOf, label,
   load, newId, rangeLabel, receiveTrip, weatherSpot, removeTrip, restoreTrip, save, stayLabel, str, touch, updateTrip, ymd
-} from "./js/store.js?v=202610251058";
-import { packTrip, unpackTrip } from "./js/share.js?v=202610251058";
+} from "./js/store.js?v=202610251105";
+import { mapUrl, packTrip, qronosUrl, soraqruUrl, tripUrl, unpackTrip } from "./js/link.js?v=202610251105";
+import { planQuery, tripCard } from "./js/card.js?v=202610251105";
 
 const $ = (id) => document.getElementById(id);
-const PAGE_URL = "https://katsuan.github.io/yuqsaki/";
-const QRONOS_URL = "https://katsuan.github.io/countdown/";
-const SORAQRU_URL = "https://katsuan.github.io/soraqru/";
-const CARD_COLOR = "#12A0B0"; // ロゴの海の色
-const URI_LIMIT = 1000; // LINE のカードのボタンに入れられる URL の長さ
 const TRIP_EMOJIS = ["🧳", "✈️", "🏝️", "⛰️", "♨️", "🏕️", "🎡", "🚗", "🚃", "🍜", "👪", "🎒"];
 const KINDS = [
   ["📍", "見る"],
@@ -57,7 +53,6 @@ function say(text, undo) {
   if (text) say.timer = setTimeout(() => ($("status").textContent = ""), 3500);
 }
 
-const mapUrl = (q) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
 
 // 旅行の何日目が今日か（旅行中でなければ 0 日目）
 function todayIndex(t) {
@@ -200,18 +195,14 @@ function renderHead(t) {
     $("vCount").classList.add("is-past");
   }
   // くろのす（カウントダウン）：出発の日までを数えるページ
-  const q = new URLSearchParams({ type: "until", date: t.start, title: `${t.title}まで`, emoji: t.emoji, from: "yuqsaki" });
-  $("qronosLink").href = `${QRONOS_URL}?${q}`;
+  $("qronosLink").href = qronosUrl(t);
   $("qronosLink").hidden = today > t.start;
   // そらくる：えらんでいる日の行き先の天気（16日先まで見られる。過ぎた日は出さない）
   const spot = weatherSpot(t, ui.day);
   const link = $("soraqruLink");
   link.hidden = !spot || spot.date < today;
   if (!link.hidden) {
-    const w = new URLSearchParams({ q: spot.place, name: spot.place, date: spot.date, from: "yuqsaki" });
-    if (spot.hour !== null) w.set("hour", String(spot.hour));
-    if (spot.alt) w.set("alt", spot.alt);
-    link.href = `${SORAQRU_URL}?${String(w).replace(/\+/g, "%20")}`;
+    link.href = soraqruUrl(spot);
     $("soraqruWhen").textContent = `${ui.day + 1}日目・${spot.place}`;
   }
 }
@@ -366,22 +357,9 @@ $("iDelete").addEventListener("click", () => {
   });
 });
 
-// おくるんの「場所・予定」（/plan/）：この予定をカレンダーの予定として送る
+// おくるんの「場所・予定」（/plan/）：この予定をカレンダーの予定として送る（中身は js/card.js）
 function planUrl(t, it) {
-  const date = addDays(t.start, it.day);
-  const q = new URLSearchParams({
-    tab: "calendar",
-    title: it.title,
-    start: it.time ? `${date}T${it.time}` : date,
-    header: `${t.emoji} ${t.title}`,
-    color: CARD_COLOR.slice(1)
-  });
-  if (it.time) q.set("minutes", "60");
-  if (it.place) q.set("location", it.place);
-  q.set("mapUrl", mapUrl(it.place || it.title));
-  if (it.memo) q.set("details", it.memo);
-  // 空白は %20 で（liff.line.me を通ると「+」がそのまま残るため。OQRN.cardUrl と同じ）
-  return window.OQRN ? `${window.OQRN.top}/plan/?${String(q).replace(/\+/g, "%20")}` : "#";
+  return window.OQRN ? `${window.OQRN.top}/plan/?${planQuery(t, it)}` : "#";
 }
 
 // ---- 持ち物 ----
@@ -463,26 +441,8 @@ async function renderShare(t) {
   const seq = ++shareSeq;
   const packed = await packTrip(t);
   if (seq !== shareSeq) return;
-  ui.shareUrl = `${PAGE_URL}#s=${packed}`;
-  const lines = Array.from({ length: dayCount(t.start, t.end) }, (_, i) => {
-    const names = itemsOf(t, i).map((it) => `${it.time ? it.time + " " : ""}${it.title}`);
-    return names.length ? `【${i + 1}日目 ${label(addDays(t.start, i))}】\n${names.slice(0, 6).join("\n")}${names.length > 6 ? `\nほか ${names.length - 6} 件` : ""}` : "";
-  }).filter(Boolean);
-  // カードのボタンは、しおりのリンクが長すぎなければ「しおりを開く」、長ければゆくさきのページ
-  const fits = ui.shareUrl.length <= URI_LIMIT;
-  const params = new URLSearchParams({
-    headerTitle: `${t.emoji} 旅のしおり`,
-    title: t.title,
-    date: rangeLabel(t),
-    showDate: "true",
-    detail: str(lines.join("\n\n"), 300) || "予定はこれから",
-    theme: "custom",
-    customColor: CARD_COLOR,
-    showAction: "true",
-    actionLabel: fits ? "🧳 しおりを開く" : "🧳 ゆくさきを開く",
-    actionUrl: fits ? ui.shareUrl : PAGE_URL,
-    from: "yuqsaki"
-  });
+  ui.shareUrl = tripUrl(packed);
+  const { params, fits } = tripCard(t, ui.shareUrl);
   $("cardBtn").href = window.OQRN ? window.OQRN.cardUrl(params) : "#";
   $("cardNote").hidden = fits;
   $("cardNote").textContent = "※ しおりが長いので、カードのボタンからはしおりを開けません。「🔗 しおりのリンクを送る」もいっしょに送ってください。";

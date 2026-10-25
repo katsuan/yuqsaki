@@ -8,7 +8,7 @@ const mem = new Map();
 globalThis.localStorage = { getItem: (k) => (mem.has(k) ? mem.get(k) : null), setItem: (k, v) => mem.set(k, String(v)) };
 const S = await import("../js/store.js");
 const { importJson, exportJson, receiveTrip, load, MAX_ITEMS, MAX_IMPORT_BYTES, MAX_TRIPS } = S;
-const { packTrip, unpackTrip, MAX_LINK_CHARS } = await import("../js/share.js");
+const { packTrip, unpackTrip, MAX_LINK_CHARS } = await import("../js/link.js");
 
 const XSS = '" onclick=alert(1) x'; // qcheck-ok: W8 テストの見本の文字
 const ID = /^[a-z0-9]{4,20}$/;

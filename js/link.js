@@ -70,3 +70,30 @@ export async function unpackTrip(text) {
   if (bytes.length > MAX_UNPACKED_BYTES) throw new Error("too large");
   return JSON.parse(new TextDecoder().decode(bytes));
 }
+
+// ---- ほかのページへのリンク（行き先は自分のツールと Google マップだけ。W5） ----
+export const PAGE_URL = "https://katsuan.github.io/yuqsaki/";
+const QRONOS_URL = "https://katsuan.github.io/countdown/";
+const SORAQRU_URL = "https://katsuan.github.io/soraqru/";
+// 空白は %20 で（liff.line.me を通ると「+」がそのまま残るため。OQRN.cardUrl と同じ）
+const query = (q) => String(q).replace(/\+/g, "%20");
+
+// しおりを詰めたリンク（packTrip の結果を # のあとに）
+export const tripUrl = (packed) => `${PAGE_URL}#s=${packed}`;
+
+// Google マップで探す
+export const mapUrl = (q) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+
+// くろのす（カウントダウン）：出発の日までを数えるページ
+export function qronosUrl(t) {
+  const q = new URLSearchParams({ type: "until", date: t.start, title: `${t.title}まで`, emoji: t.emoji, from: "yuqsaki" });
+  return `${QRONOS_URL}?${q}`;
+}
+
+// そらくる：その日の行き先の天気（spot は store.js の weatherSpot の答え）
+export function soraqruUrl(spot) {
+  const w = new URLSearchParams({ q: spot.place, name: spot.place, date: spot.date, from: "yuqsaki" });
+  if (spot.hour !== null) w.set("hour", String(spot.hour));
+  if (spot.alt) w.set("alt", spot.alt);
+  return `${SORAQRU_URL}?${query(w)}`;
+}
