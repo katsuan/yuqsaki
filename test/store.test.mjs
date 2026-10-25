@@ -12,7 +12,9 @@ const { packTrip, unpackTrip, MAX_LINK_CHARS } = await import("../js/link.js");
 
 const XSS = '" onclick=alert(1) x'; // qcheck-ok: W8 テストの見本の文字
 const ID = /^[a-z0-9]{4,20}$/;
+// 見本のしおり（extra で一部を変える）
 const trip = (extra = {}) => ({ id: "trip0001", title: "沖縄", emoji: "🌺", start: "2026-11-01", end: "2026-11-03", upd: 1, items: [{ id: "item0001", day: 1, time: "10:00", kind: "🍴", title: "そば", place: "那覇" }], bring: [{ id: "bring001", name: "水着" }], ...extra });
+// バイト → base64url の文字（リンクに入れる形）
 const b64url = (buf) => Buffer.from(buf).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 
 test("共有リンクで受けとった id に記号が入っていても、ボタンに入るのは英数字だけ", async () => {

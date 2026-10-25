@@ -1,10 +1,11 @@
 // ゆくさき（YuQsaki）：画面の操作。しおりはこの端末の中だけ（js/store.js）、リンクに詰めて渡す（js/link.js）、送るカードは js/card.js
+// 読まれるところ：index.html（画面の入口。部品は js/ から読む）
 import {
   MAX_BRING, MAX_DAYS, MAX_IMPORT_BYTES, MAX_ITEMS, addDays, addTrip, cleanItem, currentTrip, dayCount, exportJson, importJson, itemsOf, label,
   load, newId, rangeLabel, receiveTrip, weatherSpot, removeTrip, restoreTrip, save, stayLabel, str, touch, updateTrip, ymd
-} from "./js/store.js?v=202610251105";
-import { mapUrl, packTrip, qronosUrl, soraqruUrl, tripUrl, unpackTrip } from "./js/link.js?v=202610251105";
-import { planQuery, tripCard } from "./js/card.js?v=202610251105";
+} from "./js/store.js?v=202610251110";
+import { mapUrl, packTrip, qronosUrl, soraqruUrl, tripUrl, unpackTrip } from "./js/link.js?v=202610251110";
+import { planQuery, tripCard } from "./js/card.js?v=202610251110";
 
 const $ = (id) => document.getElementById(id);
 const TRIP_EMOJIS = ["🧳", "✈️", "🏝️", "⛰️", "♨️", "🏕️", "🎡", "🚗", "🚃", "🍜", "👪", "🎒"];
@@ -34,8 +35,10 @@ const ui = {
   shareUrl: "" // いまのしおりを詰めたリンク
 };
 
+// 文字を HTML に入れられる形にする（& < > " ' を置きかえる）
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
+// いまのしおりを端末に残す。残せなかったら知らせる
 function persist() {
   if (!save(state)) say("この端末に残せませんでした（プライベートブラウズでは、閉じると消えます）");
 }
@@ -43,6 +46,7 @@ function persist() {
 // 季節の絵文字をときどき文の後ろに（Q キットの season.js。まだ読めていなければ、そのまま）
 const cheer = (text) => (window.QSeason ? window.QSeason.decorate(text) : text);
 
+// 下に短い知らせを出す（undo があれば「元に戻す」ボタンつき）
 function say(text, undo) {
   if (window.LineShareUI?.toast) {
     window.LineShareUI.toast(text, undo ? { actionLabel: "元に戻す", onAction: undo } : {});
@@ -97,6 +101,7 @@ function openTripForm(mode) {
   $("tripForm").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+// しおりを作る・直す欄を描く（しおりがないときは、いつも出す）
 function renderTripForm() {
   const open = !!ui.tripForm || !state.trips.length;
   $("tripForm").hidden = !open;
@@ -112,6 +117,7 @@ function renderTripForm() {
   renderStay();
 }
 
+// 行く日・帰る日の下に「2泊3日」などと、まちがいを出す
 function renderStay() {
   const s = $("tStart").value;
   const e = $("tEnd").value;
@@ -282,11 +288,13 @@ function openItemForm(it) {
   if (!it) setTimeout(() => $("iTitle").focus({ preventScroll: true }), 300);
 }
 
+// 予定の欄を閉じる（直していた予定も忘れる）
 function closeItemForm() {
   ui.itemForm = false;
   ui.editing = null;
 }
 
+// 予定を足す・直す欄を描く（直すときは「この予定をカードで送る」のリンクも）
 function renderItemForm(t) {
   $("itemForm").hidden = !ui.itemForm;
   if (!ui.itemForm) return;
@@ -381,6 +389,7 @@ function renderBring(t) {
   $("bClear").hidden = !done;
 }
 
+// 持ち物を1つ足す（空・同じ名前は足さない。上限まで）
 function addBring(text) {
   const t = currentTrip(state);
   const name = str(text, 30);
@@ -392,6 +401,7 @@ function addBring(text) {
   persist();
   render();
 }
+// 持ち物の欄の文字を足して、欄を空にする
 function addBringFromInput() {
   addBring($("bName").value);
   $("bName").value = "";
@@ -437,6 +447,7 @@ $("bClear").addEventListener("click", () => {
 // ---- みんなに渡す ----
 // 詰めるのは非同期なので、あとから始めたものだけを使う（古い中身のリンクで上書きしない）
 let shareSeq = 0;
+// しおりを詰めたリンクと、送るカードのリンクを作りなおす
 async function renderShare(t) {
   const seq = ++shareSeq;
   const packed = await packTrip(t);
@@ -561,6 +572,7 @@ function render() {
 window.addEventListener("hashchange", receiveFromHash);
 // 日付をまたいで開きっぱなしでも、「あと○日」「○日目」「きょう」を今日に
 let shownDay = ymd();
+// 日付が変わっていたら描きなおす
 const refreshDay = () => {
   if (ymd() === shownDay) return;
   shownDay = ymd();

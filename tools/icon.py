@@ -48,6 +48,7 @@ def decorate(d, s):
         d.ellipse(((x - r) * s, (y - r) * s, (x + r) * s, (y + r) * s), fill=(255, 255, 255, a))
 
 
+# アイコン・ロゴ・OGP の画像をまとめて作る（python3 tools/icon.py で動かす）
 def main():
     BRAND.write_icons(ROOT, SHAPES)
     logo, ratio = BRAND.logo_svg("YuQsaki", SHAPES, C, RING_OUTER, "YuQsaki（ゆくさき）")

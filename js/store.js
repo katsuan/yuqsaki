@@ -3,6 +3,7 @@
 //   予定 1件 = { id, day: 0〜（何日目−1）, time: "HH:MM" か "", kind: 絵文字, title, place, memo, done }
 //   持ち物 1件 = { id, name, done }
 // current：いま開いているしおりの id
+// 読まれるところ：app.js・js/card.js（テストは test/store.test.mjs）
 
 const KEY = "yuqsaki:v1";
 export const MAX_DAYS = 14;
@@ -17,6 +18,7 @@ export function isDate(text) {
 }
 // id は画面のボタンにも入れるので、英数字だけ（ちがう形なら新しく作る。共有リンクで受けとった中身も同じ）
 const ID = /^[a-z0-9]{4,20}$/;
+// id の形（英数字）ならそのまま、ちがえば新しい id
 const cleanId = (v) => (ID.test(String(v ?? "")) ? String(v) : newId());
 export const MAX_TRIPS = 50;
 export const MAX_IMPORT_BYTES = 2 * 1024 * 1024; // 控えのファイルは 2MB まで
@@ -32,10 +34,12 @@ function uniqueIds(list) {
 }
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
+// 新しい id を作る
 export function newId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
+// 空の中身
 function blank() {
   return { v: 1, trips: [], current: null };
 }
@@ -46,6 +50,7 @@ export function str(v, n) {
   return /[\uD800-\uDBFF]$/.test(s) ? s.slice(0, -1) : s;
 }
 
+// 予定1件を正しい形にそろえる（何日目は、しおりの日数の中に）
 export function cleanItem(it, days) {
   return {
     id: cleanId(it.id),
@@ -59,6 +64,7 @@ export function cleanItem(it, days) {
   };
 }
 
+// しおり1つを正しい形にそろえる。行く日がなければ null
 export function cleanTrip(t) {
   if (!t || typeof t !== "object") return null;
   const start = isDate(t.start) ? t.start : null;
@@ -78,6 +84,7 @@ export function cleanTrip(t) {
   };
 }
 
+// 読んだ中身を正しい形にそろえる（壊れたしおりは捨てる）
 function clean(raw) {
   const s = blank();
   if (!raw || typeof raw !== "object") return s;
@@ -86,6 +93,7 @@ function clean(raw) {
   return s;
 }
 
+// 端末に残したしおりを読む（なければ空）
 export function load() {
   try {
     return clean(JSON.parse(localStorage.getItem(KEY) || "null"));
@@ -94,6 +102,7 @@ export function load() {
   }
 }
 
+// しおりを端末に残す。残せたら true
 export function save(state) {
   try {
     localStorage.setItem(KEY, JSON.stringify(state));
@@ -105,22 +114,28 @@ export function save(state) {
 
 // ---- 日付 ----
 const WEEK = ["日", "月", "火", "水", "木", "金", "土"];
+// 日時 → "YYYY-MM-DD"（この端末の時刻で）
 export function ymd(d = new Date()) {
+  // 2けたにそろえる
   const pad = (n) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
+// "YYYY-MM-DD" → その日の0時（この端末の時刻）
 function toDate(s) {
   const [y, m, d] = s.split("-").map(Number);
   return new Date(y, m - 1, d);
 }
+// "YYYY-MM-DD" の n 日あとを返す
 export function addDays(s, n) {
   const d = toDate(s);
   d.setDate(d.getDate() + n);
   return ymd(d);
 }
+// 行く日から帰る日まで何日か（日帰りは 1）
 export function dayCount(start, end) {
   return Math.round((toDate(end) - toDate(start)) / 86400000) + 1;
 }
+// "YYYY-MM-DD" → 「11/1（日）」
 export function label(s) {
   const d = toDate(s);
   return `${d.getMonth() + 1}/${d.getDate()}（${WEEK[d.getDay()]}）`;
@@ -140,6 +155,7 @@ export function currentTrip(state) {
   return state.trips.find((t) => t.id === state.current) || null;
 }
 
+// しおりを作って先頭に足し、開く。作ったしおりを返す
 export function addTrip(state, t) {
   const trip = cleanTrip({ ...t, id: newId(), items: [], bring: [], upd: Date.now() });
   state.trips.unshift(trip);
@@ -155,6 +171,7 @@ export function updateTrip(state, id, fields) {
   return t;
 }
 
+// しおりを消し、戻すための控えを返す
 export function removeTrip(state, id) {
   const i = state.trips.findIndex((x) => x.id === id);
   if (i < 0) return null;
@@ -163,12 +180,14 @@ export function removeTrip(state, id) {
   return { trip, index: i };
 }
 
+// 消したしおりを、もとの場所に戻して開く
 export function restoreTrip(state, trash) {
   if (!trash || state.trips.some((x) => x.id === trash.trip.id)) return;
   state.trips.splice(Math.min(trash.index, state.trips.length), 0, trash.trip);
   state.current = trash.trip.id;
 }
 
+// しおりの「直した時刻」をいまにする（リンクで受けとったときの新しさくらべに使う）
 export function touch(trip) {
   trip.upd = Date.now();
 }
@@ -186,6 +205,7 @@ export function itemsOf(trip, day) {
 // 行き先がわからなければ null。そらくるは場所を国土地理院（施設・住所）→ 市や町の名前の順に探し、なければ alt で探す
 export function weatherSpot(trip, day) {
   const items = itemsOf(trip, day);
+  // 予定の中で、場所が入っている最初のもの
   const anyPlace = (list) => (list.find((it) => it.place && it.place.trim()) || {}).place;
   const word = (String(trip.title || "").trim().split(/[\s\u3000・、,]+/)[0] || "").slice(0, 40);
   const place = (anyPlace(items) || anyPlace(trip.items) || word || "").trim().slice(0, 40);
@@ -227,6 +247,7 @@ export function exportJson(state) {
   return JSON.stringify({ app: "yuqsaki", exportedAt: new Date().toISOString(), ...state }, null, 1);
 }
 
+// 控えのファイルを読みこみ、ふえたしおりの数を返す（同じしおりは新しいほうに）
 export function importJson(state, text) {
   if (String(text).length > MAX_IMPORT_BYTES) throw new Error("too large");
   const incoming = clean(JSON.parse(text));

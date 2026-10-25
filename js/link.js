@@ -1,12 +1,16 @@
-// ゆくさき：しおりをリンクに詰める・リンクから取り出す（サーバーを使わずに、家族や友だちへ渡すため）
+// ゆくさき：URL の受け渡し。しおりをリンクに詰める・取り出す（サーバーを使わずに、家族や友だちへ渡すため）と、
+// Google マップ・くろのす・そらくるへのリンク
 // しおりの JSON を deflate で縮めて base64url にし、URL の # のあとに入れる（# のあとはサーバーに送られない）
 //   https://katsuan.github.io/yuqsaki/#s=<縮めたしおり>
+// 読まれるところ：app.js・js/card.js（テストは test/card.test.mjs・test/store.test.mjs）
 
+// バイトの並び → base64url の文字（URL にそのまま入れられる形）
 const enc = (bytes) => {
   let s = "";
   bytes.forEach((b) => (s += String.fromCharCode(b)));
   return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 };
+// base64url の文字 → バイトの並び
 const dec = (text) => {
   const b = atob(text.replace(/-/g, "+").replace(/_/g, "/"));
   return Uint8Array.from(b, (c) => c.charCodeAt(0));
@@ -16,6 +20,7 @@ const dec = (text) => {
 export const MAX_LINK_CHARS = 60000;
 export const MAX_UNPACKED_BYTES = 512 * 1024;
 
+// バイトの並びを、縮める・広げる流れに通して返す（limit をこえたら止めて断る）
 async function pipe(bytes, stream, limit = Infinity) {
   const reader = new Blob([bytes]).stream().pipeThrough(stream).getReader();
   const chunks = [];
@@ -53,6 +58,7 @@ export function shareable(trip) {
   };
 }
 
+// しおりを、リンクに入れる文字に詰める（縮められるブラウザは "z"＋縮めたもの、ほかは "j"＋そのまま）
 export async function packTrip(trip) {
   const json = new TextEncoder().encode(JSON.stringify(shareable(trip)));
   if (typeof CompressionStream === "function") {
@@ -61,6 +67,7 @@ export async function packTrip(trip) {
   return "j" + enc(json); // 縮められない古いブラウザ
 }
 
+// リンクの文字から、しおりの中身を取り出す（長すぎる・ふくらみすぎるものは断る）
 export async function unpackTrip(text) {
   if (typeof text !== "string" || text.length > MAX_LINK_CHARS) throw new Error("too long");
   const kind = text[0];
