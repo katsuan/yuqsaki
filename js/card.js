@@ -1,7 +1,7 @@
 // ゆくさき：おくるんに渡す中身（しおりのお知らせカード・予定をカレンダーの予定として送る「場所・予定」）。画面には触らない
 // 読まれるところ：app.js（テストは test/card.test.mjs）
-import { addDays, dayCount, itemsOf, label, rangeLabel, str } from "./store.js?v=202610260520";
-import { PAGE_URL, mapUrl } from "./link.js?v=202610260520";
+import { addDays, dayCount, itemsOf, label, rangeLabel, str } from "./store.js?v=202610260610";
+import { PAGE_URL, mapUrl } from "./link.js?v=202610260610";
 
 export const CARD_COLOR = "#12A0B0"; // ロゴの海の色
 export const URI_LIMIT = 1000; // LINE のカードのボタンに入れられる URL の長さ

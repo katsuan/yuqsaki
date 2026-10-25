@@ -131,3 +131,8 @@ textarea.ls-input { resize: vertical; font-size: 16px; line-height: 1.5; }
   :root[data-ls-dark="auto"] .count.is-now { background: rgba(244, 166, 42, 0.18); color: #ffc670; }
   :root[data-ls-dark="auto"] .item.is-new { animation: none; }
 }
+
+/* しるしの選択肢（Q キットの ls-picker の中）：候補 12 個は 6 列×2 段、カスタムはその下に横いっぱい */
+.emoji-items { display: contents; }
+.emoji-custom { grid-column: 1 / -1; margin-top: 4px; }
+.emoji-custom::placeholder { font-size: 13px; }

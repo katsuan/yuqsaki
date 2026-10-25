@@ -3,9 +3,9 @@
 import {
   MAX_BRING, MAX_DAYS, MAX_IMPORT_BYTES, MAX_ITEMS, addDays, addTrip, cleanItem, currentTrip, dayCount, exportJson, importJson, itemsOf, label,
   load, newId, rangeLabel, receiveTrip, weatherSpot, removeTrip, restoreTrip, save, stayLabel, str, touch, updateTrip, ymd
-} from "./js/store.js?v=202610260520";
-import { mapUrl, packTrip, qronosUrl, soraqruUrl, tripUrl, unpackTrip } from "./js/link.js?v=202610260520";
-import { planQuery, tripCard } from "./js/card.js?v=202610260520";
+} from "./js/store.js?v=202610260610";
+import { mapUrl, packTrip, qronosUrl, soraqruUrl, tripUrl, unpackTrip } from "./js/link.js?v=202610260610";
+import { planQuery, tripCard } from "./js/card.js?v=202610260610";
 
 const $ = (id) => document.getElementById(id);
 const TRIP_EMOJIS = ["🧳", "✈️", "🏝️", "⛰️", "♨️", "🏕️", "🎡", "🚗", "🚃", "🍜", "👪", "🎒"];
@@ -116,8 +116,11 @@ function renderTripForm() {
   // しるし：名前の入力枠の中の左。下の選べるしるしは、押したとき・名前を入れているあいだだけ出る（Q キットの pickField）
   $("tEmojiNow").textContent = ui.tEmoji;
   $("tEmojiBtn").setAttribute("aria-label", `しるしを選ぶ（いま：${ui.tEmoji}）`);
-  $("tEmojis").style.setProperty("--cols", String(TRIP_EMOJIS.length > 9 ? 6 : TRIP_EMOJIS.length)); // 12 個は 6 列×2 段
-  $("tEmojis").innerHTML = TRIP_EMOJIS.map((e) => `<button class="ls-picker-item" type="button" role="radio" aria-checked="${e === ui.tEmoji}" data-emoji="${e}">${e}</button>`).join("");
+  const custom = !TRIP_EMOJIS.includes(ui.tEmoji);
+  $("tEmojiCustom").classList.toggle("is-selected", custom);
+  // 直すとき：カスタムのしるしなら、カスタムの欄にも出す
+  if (custom && document.activeElement !== $("tEmojiCustom")) $("tEmojiCustom").value = ui.tEmoji;
+  $("tEmojiItems").innerHTML = TRIP_EMOJIS.map((e) => `<button class="ls-picker-item" type="button" role="radio" aria-checked="${e === ui.tEmoji}" data-emoji="${e}">${e}</button>`).join("");
   renderStay();
 }
 
@@ -140,10 +143,25 @@ $("tEmojis").addEventListener("click", (e) => {
   const b = e.target.closest("[data-emoji]");
   if (!b) return;
   ui.tEmoji = b.dataset.emoji;
+  $("tEmojiCustom").value = "";
   renderTripForm();
   // 選んだらたたむ（名前を入れているあいだは開いたまま）
   if (document.activeElement !== $("tTitle")) tEmojiPick ? tEmojiPick.close() : ($("tEmojis").hidden = true);
 });
+// カスタム：入れた絵文字の1つめを、しるしにする（英数字などは使わない）。押しただけでも、前に入れたものを選ぶ
+const firstMark = (v) => {
+  const t = v.trim();
+  const first = window.Intl?.Segmenter ? [...new Intl.Segmenter("ja", { granularity: "grapheme" }).segment(t)][0]?.segment || "" : Array.from(t)[0] || "";
+  return first && !/[\x00-\x7f]/.test(first) ? first : "";
+};
+["input", "focus"].forEach((type) =>
+  $("tEmojiCustom").addEventListener(type, () => {
+    const mark = firstMark($("tEmojiCustom").value);
+    if (!mark) return;
+    ui.tEmoji = mark;
+    renderTripForm();
+  })
+);
 $("tStart").addEventListener("change", () => {
   // 行く日を動かしたら、帰る日も同じだけ動かす（泊数はそのまま）
   const s = $("tStart").value;

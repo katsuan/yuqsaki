@@ -26,7 +26,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://katsuan.github.io/line-share/shared/ui.css?v=202610260300">
-<link rel="stylesheet" href="style.css?v=202610260520">
+<link rel="stylesheet" href="style.css?v=202610260610">
 </head>
 <body>
 <main class="ls-page ls-stack">
@@ -50,7 +50,11 @@
         <button id="tEmojiBtn" class="ls-pickfield-btn" type="button" aria-controls="tEmojis"><span id="tEmojiNow"></span></button>
         <input id="tTitle" maxlength="30" placeholder="例：沖縄 家族旅行" autocomplete="off" enterkeyhint="done" aria-labelledby="tTitleLabel">
       </div>
-      <div id="tEmojis" class="ls-picker" role="radiogroup" aria-label="しるし" hidden></div>
+      <div id="tEmojis" class="ls-picker" role="radiogroup" aria-label="しるし" style="--cols: 6" hidden>
+        <div id="tEmojiItems" class="emoji-items"></div>
+        <!-- カスタム：好きな絵文字1つ（候補の下に横いっぱい） -->
+        <input id="tEmojiCustom" class="ls-picker-custom emoji-custom" maxlength="8" placeholder="✏️ カスタム（好きな絵文字を1つ）" autocomplete="off" enterkeyhint="done" aria-label="カスタムのしるし（好きな絵文字を1つ）">
+      </div>
     </div>
     <p id="tTitleError" class="ls-hint is-error" role="alert" hidden>行き先・名前を入れてね</p>
     <div class="date-grid">
@@ -164,7 +168,7 @@
 
 <script src="https://katsuan.github.io/line-share/shared/oqrn.js"></script>
 <script src="https://katsuan.github.io/line-share/shared/ui.js?v=202610260300" defer></script>
-<script type="module" src="app.js?v=202610260520"></script>
+<script type="module" src="app.js?v=202610260610"></script>
 <script src="https://katsuan.github.io/line-share/shared/tool-share.js" data-tool="yuqsaki" defer></script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});</script>
 </body>
