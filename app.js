@@ -3,9 +3,9 @@
 import {
   MAX_BRING, MAX_DAYS, MAX_IMPORT_BYTES, MAX_ITEMS, addDays, addTrip, cleanItem, currentTrip, dayCount, exportJson, importJson, itemsOf, label,
   load, newId, rangeLabel, receiveTrip, weatherSpot, removeTrip, restoreTrip, save, stayLabel, str, touch, updateTrip, ymd
-} from "./js/store.js?v=202610251120";
-import { mapUrl, packTrip, qronosUrl, soraqruUrl, tripUrl, unpackTrip } from "./js/link.js?v=202610251120";
-import { planQuery, tripCard } from "./js/card.js?v=202610251120";
+} from "./js/store.js?v=202610260520";
+import { mapUrl, packTrip, qronosUrl, soraqruUrl, tripUrl, unpackTrip } from "./js/link.js?v=202610260520";
+import { planQuery, tripCard } from "./js/card.js?v=202610260520";
 
 const $ = (id) => document.getElementById(id);
 const TRIP_EMOJIS = ["🧳", "✈️", "🏝️", "⛰️", "♨️", "🏕️", "🎡", "🚗", "🚃", "🍜", "👪", "🎒"];
@@ -113,7 +113,11 @@ function renderTripForm() {
   $("tripFormHeading").textContent = ui.tripForm === "edit" ? "名前・日にちを直す" : "しおりを作る";
   $("tSave").textContent = ui.tripForm === "edit" ? "✏️ 直す" : "🧳 しおりを作る";
   $("tCancel").hidden = !state.trips.length;
-  $("tEmojis").innerHTML = TRIP_EMOJIS.map((e) => `<button class="ls-chip emoji" type="button" role="radio" aria-checked="${e === ui.tEmoji}" data-emoji="${e}">${e}</button>`).join("");
+  // しるし：名前の入力枠の中の左。下の選べるしるしは、押したとき・名前を入れているあいだだけ出る（Q キットの pickField）
+  $("tEmojiNow").textContent = ui.tEmoji;
+  $("tEmojiBtn").setAttribute("aria-label", `しるしを選ぶ（いま：${ui.tEmoji}）`);
+  $("tEmojis").style.setProperty("--cols", String(TRIP_EMOJIS.length > 9 ? 6 : TRIP_EMOJIS.length)); // 12 個は 6 列×2 段
+  $("tEmojis").innerHTML = TRIP_EMOJIS.map((e) => `<button class="ls-picker-item" type="button" role="radio" aria-checked="${e === ui.tEmoji}" data-emoji="${e}">${e}</button>`).join("");
   renderStay();
 }
 
@@ -128,11 +132,17 @@ function renderStay() {
   $("tStay").textContent = n > MAX_DAYS ? `⚠️ ${MAX_DAYS}日までにしてください` : `${rangeLabel(t)}　${stayLabel(t)}`;
 }
 
+// しるしを押したとき・名前を入れているあいだは、選べるしるしを出す（Q キットの pickField）
+const tEmojiPick = window.LineShareUI?.pickField?.({ field: $("tTitleField"), button: $("tEmojiBtn"), input: $("tTitle"), picker: $("tEmojis") }) || null;
+// Q キットが古い・読めないときは、押して開く・たたむだけ
+if (!tEmojiPick) $("tEmojiBtn").addEventListener("click", () => ($("tEmojis").hidden = !$("tEmojis").hidden));
 $("tEmojis").addEventListener("click", (e) => {
   const b = e.target.closest("[data-emoji]");
   if (!b) return;
   ui.tEmoji = b.dataset.emoji;
   renderTripForm();
+  // 選んだらたたむ（名前を入れているあいだは開いたまま）
+  if (document.activeElement !== $("tTitle")) tEmojiPick ? tEmojiPick.close() : ($("tEmojis").hidden = true);
 });
 $("tStart").addEventListener("change", () => {
   // 行く日を動かしたら、帰る日も同じだけ動かす（泊数はそのまま）
