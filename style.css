@@ -85,6 +85,9 @@ textarea.ls-input { resize: vertical; font-size: 16px; line-height: 1.5; }
 .memo { margin: 2px 0 0; color: var(--ls-subtext); font-size: 13px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
 .done { display: grid; place-items: center; width: 34px; height: 34px; margin-top: 2px; padding: 0; border: 2px dashed var(--ls-line-strong); border-radius: 50%; background: none; color: #fff; font-size: 17px; font-weight: 800; cursor: pointer; }
 .item.is-done .done { border: 0; background: var(--ls-accent); }
+/* 見た目は 34px の丸のまま、押せる広さは 44px に（C3） */
+.done, .mini { position: relative; }
+.done::after, .mini::after { content: ""; position: absolute; inset: -5px; }
 .item.is-done .title { color: var(--ls-subtext); text-decoration: line-through; text-decoration-thickness: 1.5px; }
 .item.is-editing { background: var(--ls-accent-soft); border-radius: 12px; }
 .item.is-new { animation: shine 1.6s ease-out; border-radius: 12px; }

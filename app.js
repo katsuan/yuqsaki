@@ -3,9 +3,9 @@
 import {
   MAX_BRING, MAX_DAYS, MAX_IMPORT_BYTES, MAX_ITEMS, addDays, addTrip, cleanItem, currentTrip, dayCount, exportJson, importJson, itemsOf, label,
   load, newId, rangeLabel, receiveTrip, weatherSpot, removeTrip, restoreTrip, save, stayLabel, str, touch, updateTrip, ymd
-} from "./js/store.js?v=202610251110";
-import { mapUrl, packTrip, qronosUrl, soraqruUrl, tripUrl, unpackTrip } from "./js/link.js?v=202610251110";
-import { planQuery, tripCard } from "./js/card.js?v=202610251110";
+} from "./js/store.js?v=202610251120";
+import { mapUrl, packTrip, qronosUrl, soraqruUrl, tripUrl, unpackTrip } from "./js/link.js?v=202610251120";
+import { planQuery, tripCard } from "./js/card.js?v=202610251120";
 
 const $ = (id) => document.getElementById(id);
 const TRIP_EMOJIS = ["🧳", "✈️", "🏝️", "⛰️", "♨️", "🏕️", "🎡", "🚗", "🚃", "🍜", "👪", "🎒"];
@@ -570,6 +570,19 @@ function render() {
 }
 
 window.addEventListener("hashchange", receiveFromHash);
+
+// 最初だけの使い方（Q キットの「💡 使い方」。「わかった」で消え、その端末では二度と出さない）
+window.addEventListener("load", () =>
+  window.LineShareUI?.firstTip?.(
+    "yuqsaki",
+    [
+      "行き先と日にちを決めると、日ごとの予定と持ち物をまとめたしおりができます",
+      "予定の名前を押すと直せます。右の丸は「行った・済んだ」のしるし",
+      "「🔗 しおりのリンクを送る」で、家族や友だちに同じしおりを渡せます"
+    ],
+    document.getElementById("tripBar")
+  )
+);
 // 日付をまたいで開きっぱなしでも、「あと○日」「○日目」「きょう」を今日に
 let shownDay = ymd();
 // 日付が変わっていたら描きなおす
