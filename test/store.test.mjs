@@ -6,7 +6,8 @@ import { deflateRawSync } from "node:zlib";
 
 const mem = new Map();
 globalThis.localStorage = { getItem: (k) => (mem.has(k) ? mem.get(k) : null), setItem: (k, v) => mem.set(k, String(v)) };
-const { importJson, exportJson, receiveTrip, load, MAX_ITEMS, MAX_IMPORT_BYTES, MAX_TRIPS } = await import("../js/store.js");
+const S = await import("../js/store.js");
+const { importJson, exportJson, receiveTrip, load, MAX_ITEMS, MAX_IMPORT_BYTES, MAX_TRIPS } = S;
 const { packTrip, unpackTrip, MAX_LINK_CHARS } = await import("../js/share.js");
 
 const XSS = '" onclick=alert(1) x'; // qcheck-ok: W8 テストの見本の文字
@@ -121,4 +122,23 @@ test("日にちの書き方（日帰り・泊まり・年をまたぐ）", async
   const { rangeLabel } = await import("../js/store.js");
   assert.equal(rangeLabel({ start: "2026-11-01", end: "2026-11-01" }), "11/1（日）");
   assert.equal(rangeLabel({ start: "2026-12-31", end: "2027-01-02" }), "12/31（木） 〜 1/2（土）");
+});
+
+test("そらくるで開く：その日の予定の場所 → しおりのどこかの場所 → しおりの名前のはじめのことば。時刻は最初の予定", () => {
+  const trip = {
+    title: "沖縄 家族旅行",
+    start: "2026-11-01",
+    end: "2026-11-03",
+    items: [
+      { id: "a", day: 0, time: "", kind: "📍", title: "空港", place: "", memo: "", done: false },
+      { id: "b", day: 0, time: "13:30", kind: "📍", title: "水族館", place: "沖縄美ら海水族館", memo: "", done: false },
+      { id: "c", day: 0, time: "09:15", kind: "✈️", title: "出発", place: "", memo: "", done: false },
+      { id: "d", day: 2, time: "", kind: "🛍️", title: "おみやげ", place: "国際通り", memo: "", done: false }
+    ]
+  };
+  assert.deepEqual(S.weatherSpot(trip, 0), { place: "沖縄美ら海水族館", alt: "沖縄", date: "2026-11-01", hour: 9 });
+  assert.deepEqual(S.weatherSpot(trip, 1), { place: "沖縄美ら海水族館", alt: "沖縄", date: "2026-11-02", hour: null });
+  assert.deepEqual(S.weatherSpot(trip, 2), { place: "国際通り", alt: "沖縄", date: "2026-11-03", hour: null });
+  assert.deepEqual(S.weatherSpot({ ...trip, items: [] }, 0), { place: "沖縄", alt: "", date: "2026-11-01", hour: null });
+  assert.equal(S.weatherSpot({ ...trip, title: "  ", items: [] }, 0), null);
 });

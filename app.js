@@ -1,13 +1,14 @@
 // ゆくさき（YuQsaki）：画面の操作。しおりはこの端末の中だけ（js/store.js）、リンクに詰めて渡す（js/share.js）
 import {
   MAX_BRING, MAX_DAYS, MAX_IMPORT_BYTES, MAX_ITEMS, addDays, addTrip, cleanItem, currentTrip, dayCount, exportJson, importJson, itemsOf, label,
-  load, newId, rangeLabel, receiveTrip, removeTrip, restoreTrip, save, stayLabel, str, touch, updateTrip, ymd
-} from "./js/store.js?v=202610241456";
-import { packTrip, unpackTrip } from "./js/share.js?v=202610241456";
+  load, newId, rangeLabel, receiveTrip, weatherSpot, removeTrip, restoreTrip, save, stayLabel, str, touch, updateTrip, ymd
+} from "./js/store.js?v=202610251058";
+import { packTrip, unpackTrip } from "./js/share.js?v=202610251058";
 
 const $ = (id) => document.getElementById(id);
 const PAGE_URL = "https://katsuan.github.io/yuqsaki/";
 const QRONOS_URL = "https://katsuan.github.io/countdown/";
+const SORAQRU_URL = "https://katsuan.github.io/soraqru/";
 const CARD_COLOR = "#12A0B0"; // ロゴの海の色
 const URI_LIMIT = 1000; // LINE のカードのボタンに入れられる URL の長さ
 const TRIP_EMOJIS = ["🧳", "✈️", "🏝️", "⛰️", "♨️", "🏕️", "🎡", "🚗", "🚃", "🍜", "👪", "🎒"];
@@ -202,6 +203,17 @@ function renderHead(t) {
   const q = new URLSearchParams({ type: "until", date: t.start, title: `${t.title}まで`, emoji: t.emoji, from: "yuqsaki" });
   $("qronosLink").href = `${QRONOS_URL}?${q}`;
   $("qronosLink").hidden = today > t.start;
+  // そらくる：えらんでいる日の行き先の天気（16日先まで見られる。過ぎた日は出さない）
+  const spot = weatherSpot(t, ui.day);
+  const link = $("soraqruLink");
+  link.hidden = !spot || spot.date < today;
+  if (!link.hidden) {
+    const w = new URLSearchParams({ q: spot.place, name: spot.place, date: spot.date, from: "yuqsaki" });
+    if (spot.hour !== null) w.set("hour", String(spot.hour));
+    if (spot.alt) w.set("alt", spot.alt);
+    link.href = `${SORAQRU_URL}?${String(w).replace(/\+/g, "%20")}`;
+    $("soraqruWhen").textContent = `${ui.day + 1}日目・${spot.place}`;
+  }
 }
 
 // ---- 日ごとの予定 ----

@@ -180,6 +180,21 @@ export function itemsOf(trip, day) {
   return [...timed, ...list.filter((it) => !it.time)];
 }
 
+// ---- そらくる（天気）で開く ----
+// その日の行き先と日にち（と最初の予定の時刻）で、そらくるを開くための中身。行き先は：
+//   その日の予定の場所（最初のもの）→ しおりのどこかの予定の場所 → しおりの名前のはじめのことば（例：「沖縄 家族旅行」→ 沖縄）
+// 行き先がわからなければ null。そらくるは場所を国土地理院（施設・住所）→ 市や町の名前の順に探し、なければ alt で探す
+export function weatherSpot(trip, day) {
+  const items = itemsOf(trip, day);
+  const anyPlace = (list) => (list.find((it) => it.place && it.place.trim()) || {}).place;
+  const word = (String(trip.title || "").trim().split(/[\s\u3000・、,]+/)[0] || "").slice(0, 40);
+  const place = (anyPlace(items) || anyPlace(trip.items) || word || "").trim().slice(0, 40);
+  if (!place) return null;
+  const first = items.find((it) => /^\d{2}:\d{2}$/.test(it.time || ""));
+  // alt：場所が見つからなかったときの代わり（しおりの名前のはじめのことば）
+  return { place, alt: word && word !== place ? word : "", date: addDays(trip.start, day), hour: first ? Number(first.time.slice(0, 2)) : null };
+}
+
 // ---- 受けとったしおり ----
 // 同じしおり（id）がこの端末にあれば、届いたほうが新しいときだけ上書き（済み・持ち物のチェックは自分のものを残す）
 // 返すもの：{ trip, before }（before＝上書きする前のしおり。なければ null）／{ trip, kept: true }（この端末のほうが新しい）
