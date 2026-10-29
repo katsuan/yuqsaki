@@ -115,7 +115,7 @@ textarea.ls-input { resize: vertical; font-size: 16px; line-height: 1.5; }
 .bring-list input { flex: 0 0 auto; width: 22px; height: 22px; margin: 0; accent-color: var(--ls-accent); }
 .bring-list .is-done span { color: var(--ls-subtext); text-decoration: line-through; }
 .bring-add { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
-.mini { width: 34px; height: 34px; border: 0; border-radius: 50%; background: none; color: #9aa5a7; font-size: 15px; cursor: pointer; }
+.mini { width: 34px; height: 34px; border: 0; border-radius: 50%; background: none; color: var(--ls-subtext); font-size: 15px; cursor: pointer; }
 
 .file-btn { position: relative; overflow: hidden; }
 .file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
@@ -136,3 +136,9 @@ textarea.ls-input { resize: vertical; font-size: 16px; line-height: 1.5; }
 .emoji-items { display: contents; }
 .emoji-custom { grid-column: 1 / -1; margin-top: 4px; }
 .emoji-custom::placeholder { font-size: 13px; }
+
+/* キーボードで動かしているときの枠（Q キットの部品と同じ。指やマウスで押したときは出ない。入力欄は欄の色で見える） */
+:where(button, a[href], summary, [tabindex]):focus-visible { outline: 2px solid var(--ls-text); outline-offset: 2px; }
+/* 文字だけのボタン（「すべて消す」など）：見た目はそのまま、押せる所を上下に広げる（44px めやす） */
+.link { position: relative; }
+.link::after { content: ""; position: absolute; inset: -6px -4px; }
