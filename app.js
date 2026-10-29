@@ -3,9 +3,9 @@
 import {
   MAX_BRING, MAX_DAYS, MAX_IMPORT_BYTES, MAX_ITEMS, addDays, addTrip, cleanItem, currentTrip, dayCount, exportJson, importJson, itemsOf, label,
   load, newId, rangeLabel, receiveTrip, weatherSpot, removeTrip, restoreTrip, save, stayLabel, str, touch, updateTrip, ymd
-} from "./js/store.js?v=202610260610";
-import { mapUrl, packTrip, qronosUrl, soraqruUrl, tripUrl, unpackTrip } from "./js/link.js?v=202610260610";
-import { planQuery, tripCard } from "./js/card.js?v=202610260610";
+} from "./js/store.js?v=202610291710";
+import { mapUrl, packTrip, qronosUrl, soraqruUrl, tripUrl, unpackTrip } from "./js/link.js?v=202610291710";
+import { planQuery, tripCard } from "./js/card.js?v=202610291710";
 
 const $ = (id) => document.getElementById(id);
 const TRIP_EMOJIS = ["🧳", "✈️", "🏝️", "⛰️", "♨️", "🏕️", "🎡", "🚗", "🚃", "🍜", "👪", "🎒"];
@@ -244,7 +244,6 @@ function renderHead(t) {
 // ---- 日ごとの予定 ----
 function renderDays(t) {
   const n = dayCount(t.start, t.end);
-  ui.day = Math.min(ui.day, n - 1);
   const today = ymd();
   $("dayTabs").innerHTML = Array.from({ length: n }, (_, i) => {
     const date = addDays(t.start, i);
@@ -467,9 +466,15 @@ $("bringList").addEventListener("click", (e) => {
   });
 });
 $("bClear").addEventListener("click", () => {
-  currentTrip(state).bring.forEach((b) => (b.done = false));
+  const checked = currentTrip(state).bring.filter((b) => b.done);
+  checked.forEach((b) => (b.done = false));
   persist();
   render();
+  say(`☑️ チェックを ${checked.length} こ外しました`, () => {
+    checked.forEach((b) => (b.done = true));
+    persist();
+    render();
+  });
 });
 
 // ---- みんなに渡す ----
@@ -490,6 +495,8 @@ async function renderShare(t) {
 $("shareBtn").addEventListener("click", async () => {
   const t = currentTrip(state);
   if (!ui.shareUrl) await renderShare(t);
+  // 詰めているあいだに描きなおしが重なって、まだできていなければ、ここで詰める（空のリンクを渡さない）
+  if (!ui.shareUrl) ui.shareUrl = tripUrl(await packTrip(t));
   const text = `${t.emoji} ${t.title}（${rangeLabel(t)}）のしおり`;
   if (navigator.share) {
     try {
@@ -589,6 +596,8 @@ function render() {
   renderTripForm();
   $("tripView").hidden = !t || !!ui.tripForm;
   if (!t || ui.tripForm) return;
+  // 日にちを短く直したときも、えらんでいる日をしおりの中に（見出しの天気のリンクも、その日で作る）
+  ui.day = Math.min(ui.day, dayCount(t.start, t.end) - 1);
   renderHead(t);
   renderDays(t);
   renderItemForm(t);
