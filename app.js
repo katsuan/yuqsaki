@@ -3,9 +3,9 @@
 import {
   MAX_BRING, MAX_DAYS, MAX_IMPORT_BYTES, MAX_ITEMS, addDays, addTrip, cleanItem, currentTrip, dayCount, exportJson, importJson, itemsOf, label,
   load, newId, rangeLabel, receiveTrip, weatherSpot, removeTrip, restoreTrip, save, stayLabel, str, touch, updateTrip, ymd
-} from "./js/store.js?v=202610291807";
-import { mapUrl, packTrip, qronosUrl, soraqruUrl, tripUrl, unpackTrip } from "./js/link.js?v=202610291807";
-import { planQuery, tripCard } from "./js/card.js?v=202610291807";
+} from "./js/store.js?v=202611012034";
+import { mapUrl, packTrip, qronosUrl, soraqruUrl, tripUrl, unpackTrip } from "./js/link.js?v=202611012034";
+import { planQuery, tripCard } from "./js/card.js?v=202611012034";
 
 const $ = (id) => document.getElementById(id);
 const TRIP_EMOJIS = ["🧳", "✈️", "🏝️", "⛰️", "♨️", "🏕️", "🎡", "🚗", "🚃", "🍜", "👪", "🎒"];
@@ -321,7 +321,7 @@ function closeItemForm() {
   ui.editing = null;
 }
 
-// 予定を足す・直す欄を描く（直すときは「この予定をカードで送る」のリンクも）
+// 予定を足す・直す欄を描く（直すときは「この予定をカードでおくるん」のリンクも）
 function renderItemForm(t) {
   $("itemForm").hidden = !ui.itemForm;
   if (!ui.itemForm) return;
