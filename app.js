@@ -6,22 +6,11 @@ import {
 } from "./js/store.js?v=202611012034";
 import { mapUrl, packTrip, qronosUrl, soraqruUrl, tripUrl, unpackTrip } from "./js/link.js?v=202611012034";
 import { planQuery, tripCard } from "./js/card.js?v=202611012034";
+import {
+  KINDS, TRIP_EMOJIS, bringIdeasHtml, bringListHtml, countView, dayOptionsHtml, dayTabsHtml, firstMark, iconHtml, markItemsHtml, timelineHtml, tripBarHtml
+} from "./js/view.js?v=202611012034";
 
 const $ = (id) => document.getElementById(id);
-const TRIP_EMOJIS = ["🧳", "✈️", "🏝️", "⛰️", "♨️", "🏕️", "🎡", "🚗", "🚃", "🍜", "👪", "🎒"];
-const KINDS = [
-  ["📍", "見る"],
-  ["🍴", "ごはん"],
-  ["☕", "休む"],
-  ["🛍️", "買う"],
-  ["🏨", "宿"],
-  ["🚗", "車"],
-  ["🚃", "電車"],
-  ["✈️", "飛行機"],
-  ["♨️", "温泉"],
-  ["🎡", "遊ぶ"]
-];
-const BRING_IDEAS = ["着がえ", "充電器", "保険証", "常備薬", "歯ブラシ", "タオル", "日焼け止め", "雨具", "エコバッグ", "おやつ", "現金", "ウェットティッシュ"];
 
 let state = load();
 const ui = {
@@ -35,10 +24,6 @@ const ui = {
   shareUrl: "" // いまのしおりを詰めたリンク
 };
 
-// 文字を HTML に入れられる形にする（& < > " ' を置きかえる）
-const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-// Q キットの線アイコン（HTML の文字で。名前は Q キットの kit.html の「線アイコン」）
-const iconHtml = (name) => `<span class="ls-icon" data-icon="${name}" aria-hidden="true"></span>`;
 
 // いまのしおりを端末に残す。残せなかったら知らせる
 function persist() {
@@ -59,6 +44,61 @@ function say(text, undo) {
   if (text) say.timer = setTimeout(() => ($("status").textContent = ""), 3500);
 }
 
+// 消して、トーストの「元に戻す」で同じ場所に戻せるようにする（予定・持ち物）。消したものの名前で知らせる
+function removeWithUndo(t, list, i, name) {
+  const [gone] = list.splice(i, 1);
+  touch(t);
+  persist();
+  render();
+  say(`「${name(gone)}」を消しました`, () => {
+    list.splice(Math.min(i, list.length), 0, gone);
+    persist();
+    render();
+  });
+}
+
+// ---- しるし（しおりの名前・予定の入力枠の中の左。Q キットの pickField） ----
+// 押したとき・文字を入れているあいだは、下に選べるしるし。カスタムの欄には好きな絵文字を1つ
+const MARK_PICKS = {
+  trip: { field: "tTitleField", button: "tEmojiBtn", input: "tTitle", picker: "tEmojis", now: "tEmojiNow", custom: "tEmojiCustom", items: "tEmojiItems", choices: TRIP_EMOJIS.map((e) => [e]), className: "" },
+  kind: { field: "iTitleField", button: "iKindBtn", input: "iTitle", picker: "iKinds", now: "iKindNow", custom: "iKindCustom", items: "iKindItems", choices: KINDS, className: "kind-item" }
+};
+
+// しるしの欄の動き：候補を押す・カスタムに入れる → set(しるし) して描きなおす（rerender）
+function setupMarkPick(c, set, rerender) {
+  const pick = window.LineShareUI?.pickField?.({ field: $(c.field), button: $(c.button), input: $(c.input), picker: $(c.picker) }) || null;
+  // Q キットが古い・読めないときは、押して開く・たたむだけ
+  if (!pick) $(c.button).addEventListener("click", () => ($(c.picker).hidden = !$(c.picker).hidden));
+  $(c.picker).addEventListener("click", (e) => {
+    const b = e.target.closest("[data-mark]");
+    if (!b) return;
+    set(b.dataset.mark);
+    $(c.custom).value = "";
+    rerender();
+    // 選んだらたたむ（文字を入れているあいだは開いたまま）
+    if (document.activeElement !== $(c.input)) pick ? pick.close() : ($(c.picker).hidden = true);
+  });
+  // カスタム：入れた絵文字の1つめを、しるしにする（英数字などは使わない）。押しただけでも、前に入れたものを選ぶ
+  ["input", "focus"].forEach((type) =>
+    $(c.custom).addEventListener(type, () => {
+      const mark = firstMark($(c.custom).value);
+      if (!mark) return;
+      set(mark);
+      rerender();
+    })
+  );
+}
+
+// しるしの欄を描く（いまのしるし・候補。カスタムのしるしなら、カスタムの欄にも出す）
+function renderMarkPick(c, mark) {
+  $(c.now).textContent = mark;
+  $(c.button).setAttribute("aria-label", `しるしを選ぶ（いま：${mark}）`);
+  const custom = !c.choices.some(([e]) => e === mark);
+  $(c.custom).classList.toggle("is-selected", custom);
+  if (custom && document.activeElement !== $(c.custom)) $(c.custom).value = mark;
+  $(c.items).innerHTML = markItemsHtml(c.choices, mark, c.className);
+}
+
 
 // 旅行の何日目が今日か（旅行中でなければ 0 日目）
 function todayIndex(t) {
@@ -72,10 +112,7 @@ function renderTripBar() {
   const show = state.trips.length >= 1 && !ui.tripForm;
   $("tripBar").hidden = !show;
   if (!show) return;
-  $("tripBar").innerHTML =
-    state.trips
-      .map((t) => `<button class="ls-chip is-small" type="button" aria-pressed="${t.id === state.current}" data-trip="${t.id}">${esc(t.emoji)} ${esc(t.title)}</button>`)
-      .join("") + '<button class="ls-chip is-small new-trip" type="button" data-new>' + iconHtml("add") + '新しいしおり</button>';
+  $("tripBar").innerHTML = tripBarHtml(state.trips, state.current);
 }
 
 $("tripBar").addEventListener("click", (e) => {
@@ -115,18 +152,10 @@ function renderTripForm() {
   $("tripFormHeading").textContent = ui.tripForm === "edit" ? "名前・日にちを直す" : "しおりを作る";
   $("tSave").innerHTML = ui.tripForm === "edit" ? `${iconHtml("edit")}直す` : `${iconHtml("add")}しおりを作る`;
   $("tCancel").hidden = !state.trips.length;
-  // しるし：名前の入力枠の中の左。下の選べるしるしは、押したとき・名前を入れているあいだだけ出る（Q キットの pickField）
-  $("tEmojiNow").textContent = ui.tEmoji;
-  $("tEmojiBtn").setAttribute("aria-label", `しるしを選ぶ（いま：${ui.tEmoji}）`);
-  const custom = !TRIP_EMOJIS.includes(ui.tEmoji);
-  $("tEmojiCustom").classList.toggle("is-selected", custom);
-  // 直すとき：カスタムのしるしなら、カスタムの欄にも出す
-  if (custom && document.activeElement !== $("tEmojiCustom")) $("tEmojiCustom").value = ui.tEmoji;
-  $("tEmojiItems").innerHTML = TRIP_EMOJIS.map((e) => `<button class="ls-picker-item" type="button" role="radio" aria-checked="${e === ui.tEmoji}" data-emoji="${e}">${e}</button>`).join("");
+  renderMarkPick(MARK_PICKS.trip, ui.tEmoji);
   renderStay();
 }
 
-// 行く日・帰る日の下に「2泊3日」などと、まちがいを出す
 // 日にちのまちがいを、注意のアイコンつきで出す
 function warnStay(text) {
   const mark = Object.assign(document.createElement("span"), { className: "ls-icon" });
@@ -135,6 +164,7 @@ function warnStay(text) {
   $("tStay").replaceChildren(mark, text);
 }
 
+// 行く日・帰る日の下に「2泊3日」などと、まちがいを出す
 function renderStay() {
   const s = $("tStart").value;
   const e = $("tEnd").value;
@@ -146,33 +176,7 @@ function renderStay() {
   $("tStay").textContent = `${rangeLabel(t)}　${stayLabel(t)}`;
 }
 
-// しるしを押したとき・名前を入れているあいだは、選べるしるしを出す（Q キットの pickField）
-const tEmojiPick = window.LineShareUI?.pickField?.({ field: $("tTitleField"), button: $("tEmojiBtn"), input: $("tTitle"), picker: $("tEmojis") }) || null;
-// Q キットが古い・読めないときは、押して開く・たたむだけ
-if (!tEmojiPick) $("tEmojiBtn").addEventListener("click", () => ($("tEmojis").hidden = !$("tEmojis").hidden));
-$("tEmojis").addEventListener("click", (e) => {
-  const b = e.target.closest("[data-emoji]");
-  if (!b) return;
-  ui.tEmoji = b.dataset.emoji;
-  $("tEmojiCustom").value = "";
-  renderTripForm();
-  // 選んだらたたむ（名前を入れているあいだは開いたまま）
-  if (document.activeElement !== $("tTitle")) tEmojiPick ? tEmojiPick.close() : ($("tEmojis").hidden = true);
-});
-// カスタム：入れた絵文字の1つめを、しるしにする（英数字などは使わない）。押しただけでも、前に入れたものを選ぶ
-const firstMark = (v) => {
-  const t = v.trim();
-  const first = window.Intl?.Segmenter ? [...new Intl.Segmenter("ja", { granularity: "grapheme" }).segment(t)][0]?.segment || "" : Array.from(t)[0] || "";
-  return first && !/[\x00-\x7f]/.test(first) ? first : "";
-};
-["input", "focus"].forEach((type) =>
-  $("tEmojiCustom").addEventListener(type, () => {
-    const mark = firstMark($("tEmojiCustom").value);
-    if (!mark) return;
-    ui.tEmoji = mark;
-    renderTripForm();
-  })
-);
+setupMarkPick(MARK_PICKS.trip, (mark) => (ui.tEmoji = mark), renderTripForm);
 $("tStart").addEventListener("change", () => {
   // 行く日を動かしたら、帰る日も同じだけ動かす（泊数はそのまま）
   const s = $("tStart").value;
@@ -229,16 +233,9 @@ function renderHead(t) {
     })
   );
   const today = ymd();
-  const until = dayCount(today, t.start) - 1;
-  $("vCount").className = "count";
-  if (today < t.start) $("vCount").innerHTML = `あと<b>${until}</b>日`; // qcheck-ok: W1 数だけ
-  else if (today <= t.end) {
-    $("vCount").innerHTML = `<b>${dayCount(t.start, today)}</b>日目`; // qcheck-ok: W1 数だけ
-    $("vCount").classList.add("is-now");
-  } else {
-    $("vCount").textContent = "おかえり";
-    $("vCount").classList.add("is-past");
-  }
+  const count = countView(t, today);
+  $("vCount").className = `count${count.cls ? ` ${count.cls}` : ""}`;
+  $("vCount").innerHTML = count.html; // qcheck-ok: W1 数と決まった言葉だけ（js/view.js の countView）
   // くろのす（カウントダウン）：出発の日までを数えるページ
   $("qronosLink").href = qronosUrl(t);
   $("qronosLink").hidden = today > t.start;
@@ -254,32 +251,10 @@ function renderHead(t) {
 
 // ---- 日ごとの予定 ----
 function renderDays(t) {
-  const n = dayCount(t.start, t.end);
-  const today = ymd();
-  $("dayTabs").innerHTML = Array.from({ length: n }, (_, i) => {
-    const date = addDays(t.start, i);
-    const count = t.items.filter((it) => it.day === i).length;
-    return `<button class="ls-tab" type="button" role="tab" aria-selected="${i === ui.day}" data-day="${i}">${i + 1}日目<small>${label(date)}${date === today ? " きょう" : ""}</small>${count ? `<i>${count}</i>` : ""}</button>`;
-  }).join("");
-  $("dayTabs").hidden = n === 1;
+  $("dayTabs").innerHTML = dayTabsHtml(t, ui.day, ymd());
+  $("dayTabs").hidden = dayCount(t.start, t.end) === 1;
 
-  const list = itemsOf(t, ui.day);
-  $("timeline").innerHTML = list.length
-    ? list
-        .map((it) => {
-          const place = it.place || it.title;
-          return `<li class="item${it.done ? " is-done" : ""}${it.id === ui.editing ? " is-editing" : ""}${it.id === ui.justAdded ? " is-new" : ""}">
-            <span class="time">${it.time || ""}</span>
-            <div class="body">
-              <button class="title" type="button" data-edit="${it.id}" aria-label="${esc(it.title)} を直す">${it.kind ? `${esc(it.kind)} ` : ""}${esc(it.title)}</button>
-              <a class="place" href="${mapUrl(place)}" target="_blank" rel="noopener">${iconHtml("place")}<span>${esc(it.place || "地図で見る")}</span></a>
-              ${it.memo ? `<p class="memo">${esc(it.memo)}</p>` : ""}
-            </div>
-            <button class="done" type="button" data-done="${it.id}" aria-pressed="${it.done}" aria-label="${esc(it.title)} ${it.done ? "済み" : "まだ"}">${it.done ? iconHtml("check") : ""}</button>
-          </li>`;
-        })
-        .join("") + '<li class="edit-hint">名前を押すと直せます。右の丸は「行った・済んだ」のしるし</li>'
-    : `<li class="ls-empty"><span class="ls-empty-icon ls-icon" data-icon="place" aria-hidden="true"></span>${ui.day + 1}日目の予定はまだありません</li>`;
+  $("timeline").innerHTML = timelineHtml(itemsOf(t, ui.day), mapUrl, { day: ui.day, editing: ui.editing, justAdded: ui.justAdded });
   ui.justAdded = null;
   $("addItemBtn").hidden = ui.itemForm;
 }
@@ -317,8 +292,7 @@ function openItemForm(it) {
   $("iPlace").value = it?.place || "";
   $("iMemo").value = it?.memo || "";
   $("iTitleError").hidden = true;
-  const n = dayCount(t.start, t.end);
-  $("iDay").innerHTML = Array.from({ length: n }, (_, i) => `<option value="${i}">${i + 1}日目 ${label(addDays(t.start, i)).replace(/（.）/, "")}</option>`).join("");
+  $("iDay").innerHTML = dayOptionsHtml(t);
   $("iDay").value = it ? it.day : ui.day;
   render();
   $("itemForm").scrollIntoView({ behavior: "smooth", block: "center" });
@@ -337,13 +311,8 @@ function renderItemForm(t) {
   if (!ui.itemForm) return;
   $("itemFormHeading").innerHTML = ui.editing ? `${iconHtml("edit")}予定を直す` : `${iconHtml("add")}予定を足す`;
   $("iSave").innerHTML = ui.editing ? `${iconHtml("edit")}直す` : `${iconHtml("add")}足す`;
-  // しるし：予定の入力枠の中の左。下の候補は、押したとき・予定を入れているあいだだけ出る（しおりの名前と同じ）
-  $("iKindNow").textContent = ui.kind;
-  $("iKindBtn").setAttribute("aria-label", `しるしを選ぶ（いま：${ui.kind}）`);
-  const custom = !KINDS.some(([e]) => e === ui.kind);
-  $("iKindCustom").classList.toggle("is-selected", custom);
-  if (custom && document.activeElement !== $("iKindCustom")) $("iKindCustom").value = ui.kind;
-  $("iKindItems").innerHTML = KINDS.map(([e, name]) => `<button class="ls-picker-item kind-item" type="button" role="radio" aria-checked="${e === ui.kind}" aria-label="${name}" data-kind="${e}">${e}<small>${name}</small></button>`).join("");
+  // しるし：予定の入力枠の中の左（しおりの名前と同じ形）
+  renderMarkPick(MARK_PICKS.kind, ui.kind);
   $("iMore").hidden = !ui.editing;
   if (ui.editing) {
     const it = t.items.find((x) => x.id === ui.editing);
@@ -355,26 +324,7 @@ $("addItemBtn").addEventListener("click", () => {
   if (currentTrip(state).items.length >= MAX_ITEMS) return say(`予定は ${MAX_ITEMS} 件までです`);
   openItemForm(null);
 });
-const iKindPick = window.LineShareUI?.pickField?.({ field: $("iTitleField"), button: $("iKindBtn"), input: $("iTitle"), picker: $("iKinds") }) || null;
-if (!iKindPick) $("iKindBtn").addEventListener("click", () => ($("iKinds").hidden = !$("iKinds").hidden));
-$("iKinds").addEventListener("click", (e) => {
-  const b = e.target.closest("[data-kind]");
-  if (!b) return;
-  ui.kind = b.dataset.kind;
-  $("iKindCustom").value = "";
-  renderItemForm(currentTrip(state));
-  // 選んだらたたむ（予定を入れているあいだは開いたまま）
-  if (document.activeElement !== $("iTitle")) iKindPick ? iKindPick.close() : ($("iKinds").hidden = true);
-});
-// カスタム：入れた絵文字の1つめを、しるしにする
-["input", "focus"].forEach((type) =>
-  $("iKindCustom").addEventListener(type, () => {
-    const mark = firstMark($("iKindCustom").value);
-    if (!mark) return;
-    ui.kind = mark;
-    renderItemForm(currentTrip(state));
-  })
-);
+setupMarkPick(MARK_PICKS.kind, (mark) => (ui.kind = mark), () => renderItemForm(currentTrip(state)));
 $("iTitle").addEventListener("input", () => ($("iTitleError").hidden = true));
 $("iCancel").addEventListener("click", () => {
   closeItemForm();
@@ -410,16 +360,8 @@ $("iDelete").addEventListener("click", () => {
   const t = currentTrip(state);
   const i = t.items.findIndex((x) => x.id === ui.editing);
   if (i < 0) return;
-  const [it] = t.items.splice(i, 1);
-  touch(t);
   closeItemForm();
-  persist();
-  render();
-  say(`「${it.title}」を消しました`, () => {
-    t.items.splice(Math.min(i, t.items.length), 0, it);
-    persist();
-    render();
-  });
+  removeWithUndo(t, t.items, i, (it) => it.title);
 });
 
 // おくるんの「場所・予定」（/plan/）：この予定をカレンダーの予定として送る（中身は js/card.js）
@@ -431,18 +373,8 @@ function planUrl(t, it) {
 function renderBring(t) {
   const done = t.bring.filter((b) => b.done).length;
   $("bringMeta").textContent = t.bring.length ? `${done} / ${t.bring.length}` : "";
-  $("bringList").innerHTML = t.bring
-    .map(
-      (b) => `<li class="${b.done ? "is-done" : ""}">
-        <label><input type="checkbox" data-bring="${b.id}" ${b.done ? "checked" : ""}><span>${esc(b.name)}</span></label>
-        <button class="mini" type="button" data-bdel="${b.id}" aria-label="${esc(b.name)} を消す">${iconHtml("close")}</button>
-      </li>`
-    )
-    .join("");
-  const have = new Set(t.bring.map((b) => b.name));
-  $("bIdeas").innerHTML = BRING_IDEAS.filter((n) => !have.has(n))
-    .map((n) => `<button class="ls-chip is-small" type="button" data-bidea="${esc(n)}">${iconHtml("add")}${esc(n)}</button>`)
-    .join("");
+  $("bringList").innerHTML = bringListHtml(t.bring);
+  $("bIdeas").innerHTML = bringIdeasHtml(t.bring);
   $("bClear").hidden = !done;
 }
 
@@ -485,15 +417,7 @@ $("bringList").addEventListener("click", (e) => {
   const t = currentTrip(state);
   const i = t.bring.findIndex((b) => b.id === del.dataset.bdel);
   if (i < 0) return render();
-  const [b] = t.bring.splice(i, 1);
-  touch(t);
-  persist();
-  render();
-  say(`「${b.name}」を消しました`, () => {
-    t.bring.splice(Math.min(i, t.bring.length), 0, b);
-    persist();
-    render();
-  });
+  removeWithUndo(t, t.bring, i, (b) => b.name);
 });
 $("bClear").addEventListener("click", () => {
   const checked = currentTrip(state).bring.filter((b) => b.done);
@@ -560,7 +484,7 @@ $("exportBtn").addEventListener("click", async () => {
   a.download = file.name;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  say("⬇️ 控えを書き出しました");
+  say("控えを書き出しました");
 });
 
 $("importFile").addEventListener("change", async (e) => {
@@ -572,7 +496,7 @@ $("importFile").addEventListener("change", async (e) => {
     const added = importJson(state, await file.text());
     persist();
     render();
-    say(`⬆️ 控えを読みこみました（しおりが ${added} つふえました）`);
+    say(`控えを読みこみました（しおりが ${added} つふえました）`);
   } catch {
     say("読みこめませんでした（ゆくさきで書き出した控えか確かめてください）");
   }

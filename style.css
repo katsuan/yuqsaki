@@ -57,11 +57,11 @@ textarea.ls-input { resize: vertical; font-size: 16px; line-height: 1.5; }
 .count.is-now b { color: var(--ls-accent-ink); }
 .count.is-past b { color: var(--ls-subtext); }
 .head-actions { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; }
-.head-actions .ls-button { display: grid; gap: 0; min-height: 48px; padding: 4px 8px; font-size: 14px; line-height: 1.25; }
+.head-actions .ls-button { display: grid; gap: 0; min-height: 48px; padding: 4px; font-size: 14px; line-height: 1.25; }
 .head-actions .ls-button small { overflow: hidden; max-width: 100%; color: var(--ls-subtext); font-size: 11px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .head-actions [hidden] { display: none; }
-/* 1行目：線アイコンと名前を1行に（アイコンだけ上の行に分かれないように） */
-.head-actions .act-main { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+/* 1行目：線アイコンと名前を1行に（アイコンだけ上の行に分かれない・320px で3つ並んでも「くろの／す」と折れない。アイコンと字の間は 4px） */
+.head-actions .act-main { display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; }
 
 /* 日にちのタブ：多い日は横に送る */
 .day-tabs { grid-auto-columns: minmax(76px, 1fr); overflow-x: auto; scrollbar-width: none; position: relative; }

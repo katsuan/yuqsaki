@@ -19,3 +19,10 @@ test("小さな丸のボタンも、押せる広さは 44px 以上（34px ＋ �
   assert.match(css, /\.done[^{]*\{[^}]*width: 34px/);
   assert.match(css, /\.done::after[^{]*\{[^}]*inset: -5px/);
 });
+
+test("しおりの上の3つのボタン：アイコンと名前は1行のまま（320px で「くろの／す」と折れない）", () => {
+  const css = read("style.css");
+  assert.match(css, /\.head-actions \.act-main \{[^}]*white-space: nowrap/);
+  // 3つとも、アイコンと名前を1つのかたまりに入れている
+  assert.equal((read("index.html").match(/<span class="act-main"><span class="ls-icon"/g) || []).length, 3);
+});
