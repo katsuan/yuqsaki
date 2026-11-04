@@ -91,11 +91,11 @@
       <div id="dayTabs" class="ls-tabs day-tabs" role="tablist" aria-label="日にち"></div>
       <h2 id="dayTitle" class="ls-sr-only">予定</h2>
       <ol id="timeline" class="timeline"></ol>
-      <button id="addItemBtn" class="ls-button is-block add-item" type="button">＋ 予定を足す</button>
+      <button id="addItemBtn" class="ls-button is-block add-item" type="button"><span class="ls-icon" data-icon="add" aria-hidden="true"></span>予定を足す</button>
 
       <!-- 予定を足す・直す（押したときだけ出す） -->
       <div id="itemForm" class="item-form" hidden>
-        <p class="sub-title" id="itemFormHeading">＋ 予定を足す</p>
+        <p class="sub-title" id="itemFormHeading"><span class="ls-icon" data-icon="add" aria-hidden="true"></span>予定を足す</p>
         <div class="time-grid">
           <label class="ls-field"><span class="ls-label">時刻（なくてもOK）</span><input id="iTime" class="ls-input" type="time"></label>
           <label class="ls-field"><span class="ls-label">日にち</span><select id="iDay" class="ls-input"></select></label>
@@ -115,7 +115,7 @@
           <textarea id="iMemo" class="ls-input" rows="2" maxlength="200" placeholder="例：駐車場は P7 がいちばん近い"></textarea>
         </label>
         <div class="form-actions">
-          <button id="iSave" class="ls-button is-primary is-block" type="button">＋ 足す</button>
+          <button id="iSave" class="ls-button is-primary is-block" type="button"><span class="ls-icon" data-icon="add" aria-hidden="true"></span>足す</button>
           <button id="iCancel" class="ls-button is-block" type="button">やめる</button>
         </div>
         <div id="iMore" class="item-more" hidden>
@@ -128,7 +128,7 @@
     <!-- 送る -->
     <section class="ls-panel" aria-label="みんなに渡す">
       <p class="ls-hint">しおりの中身をまるごとリンクに入れて渡します。受けとった人は、開くだけで同じしおりが見られます（その人の端末に入ります）。直したら、もう一度送ってください。</p>
-      <button id="shareBtn" class="ls-button is-primary is-block" type="button">🔗 しおりのリンクを送る</button>
+      <button id="shareBtn" class="ls-button is-primary is-block" type="button"><span class="ls-icon" data-icon="link" aria-hidden="true"></span>しおりのリンクを送る</button>
       <a id="cardBtn" class="ls-button is-block line is-oqrn" href="#">カードでおくるん</a>
       <p id="cardNote" class="ls-hint small" hidden></p>
     </section>

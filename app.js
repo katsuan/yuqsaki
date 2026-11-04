@@ -37,6 +37,8 @@ const ui = {
 
 // 文字を HTML に入れられる形にする（& < > " ' を置きかえる）
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+// Q キットの線アイコン（HTML の文字で。名前は Q キットの kit.html の「線アイコン」）
+const iconHtml = (name) => `<span class="ls-icon" data-icon="${name}" aria-hidden="true"></span>`;
 
 // いまのしおりを端末に残す。残せなかったら知らせる
 function persist() {
@@ -73,7 +75,7 @@ function renderTripBar() {
   $("tripBar").innerHTML =
     state.trips
       .map((t) => `<button class="ls-chip is-small" type="button" aria-pressed="${t.id === state.current}" data-trip="${t.id}">${esc(t.emoji)} ${esc(t.title)}</button>`)
-      .join("") + '<button class="ls-chip is-small new-trip" type="button" data-new>＋ 新しいしおり</button>';
+      .join("") + '<button class="ls-chip is-small new-trip" type="button" data-new>' + iconHtml("add") + '新しいしおり</button>';
 }
 
 $("tripBar").addEventListener("click", (e) => {
@@ -111,7 +113,7 @@ function renderTripForm() {
     $("tEnd").value = addDays(ymd(), 8);
   }
   $("tripFormHeading").textContent = ui.tripForm === "edit" ? "名前・日にちを直す" : "しおりを作る";
-  $("tSave").textContent = ui.tripForm === "edit" ? "✏️ 直す" : "🧳 しおりを作る";
+  $("tSave").innerHTML = ui.tripForm === "edit" ? `${iconHtml("edit")}直す` : `${iconHtml("add")}しおりを作る`;
   $("tCancel").hidden = !state.trips.length;
   // しるし：名前の入力枠の中の左。下の選べるしるしは、押したとき・名前を入れているあいだだけ出る（Q キットの pickField）
   $("tEmojiNow").textContent = ui.tEmoji;
@@ -125,14 +127,23 @@ function renderTripForm() {
 }
 
 // 行く日・帰る日の下に「2泊3日」などと、まちがいを出す
+// 日にちのまちがいを、注意のアイコンつきで出す
+function warnStay(text) {
+  const mark = Object.assign(document.createElement("span"), { className: "ls-icon" });
+  mark.dataset.icon = "warn";
+  mark.setAttribute("aria-hidden", "true");
+  $("tStay").replaceChildren(mark, text);
+}
+
 function renderStay() {
   const s = $("tStart").value;
   const e = $("tEnd").value;
   if (!s || !e) return ($("tStay").textContent = "");
-  if (e < s) return ($("tStay").textContent = "⚠️ 帰る日が、行く日より前になっています");
+  if (e < s) return warnStay("帰る日が、行く日より前になっています");
   const n = dayCount(s, e);
   const t = { start: s, end: e };
-  $("tStay").textContent = n > MAX_DAYS ? `⚠️ ${MAX_DAYS}日までにしてください` : `${rangeLabel(t)}　${stayLabel(t)}`;
+  if (n > MAX_DAYS) return warnStay(`${MAX_DAYS}日までにしてください`);
+  $("tStay").textContent = `${rangeLabel(t)}　${stayLabel(t)}`;
 }
 
 // しるしを押したとき・名前を入れているあいだは、選べるしるしを出す（Q キットの pickField）
@@ -262,14 +273,14 @@ function renderDays(t) {
             <span class="kind" aria-hidden="true">${esc(it.kind)}</span>
             <div class="body">
               <button class="title" type="button" data-edit="${it.id}" aria-label="${esc(it.title)} を直す">${esc(it.title)}</button>
-              <a class="place" href="${mapUrl(place)}" target="_blank" rel="noopener">🗺 ${esc(it.place || "地図で見る")}</a>
+              <a class="place" href="${mapUrl(place)}" target="_blank" rel="noopener">${iconHtml("place")}<span>${esc(it.place || "地図で見る")}</span></a>
               ${it.memo ? `<p class="memo">${esc(it.memo)}</p>` : ""}
             </div>
-            <button class="done" type="button" data-done="${it.id}" aria-pressed="${it.done}" aria-label="${esc(it.title)} ${it.done ? "済み" : "まだ"}">${it.done ? "✓" : ""}</button>
+            <button class="done" type="button" data-done="${it.id}" aria-pressed="${it.done}" aria-label="${esc(it.title)} ${it.done ? "済み" : "まだ"}">${it.done ? iconHtml("check") : ""}</button>
           </li>`;
         })
         .join("") + '<li class="edit-hint">名前を押すと直せます。右の丸は「行った・済んだ」のしるし</li>'
-    : `<li class="ls-empty"><span class="ls-empty-icon" aria-hidden="true">🗺️</span>${ui.day + 1}日目の予定はまだありません</li>`;
+    : `<li class="ls-empty"><span class="ls-empty-icon ls-icon" data-icon="place" aria-hidden="true"></span>${ui.day + 1}日目の予定はまだありません</li>`;
   ui.justAdded = null;
   $("addItemBtn").hidden = ui.itemForm;
 }
@@ -325,8 +336,8 @@ function closeItemForm() {
 function renderItemForm(t) {
   $("itemForm").hidden = !ui.itemForm;
   if (!ui.itemForm) return;
-  $("itemFormHeading").textContent = ui.editing ? "✏️ 予定を直す" : "＋ 予定を足す";
-  $("iSave").textContent = ui.editing ? "✏️ 直す" : "＋ 足す";
+  $("itemFormHeading").innerHTML = ui.editing ? `${iconHtml("edit")}予定を直す` : `${iconHtml("add")}予定を足す`;
+  $("iSave").innerHTML = ui.editing ? `${iconHtml("edit")}直す` : `${iconHtml("add")}足す`;
   $("iKinds").innerHTML = KINDS.map(([e, name]) => `<button class="ls-chip kind-chip" type="button" role="radio" aria-checked="${e === ui.kind}" data-kind="${e}"><span>${e}</span><small>${name}</small></button>`).join("");
   $("iMore").hidden = !ui.editing;
   if (ui.editing) {
@@ -405,13 +416,13 @@ function renderBring(t) {
     .map(
       (b) => `<li class="${b.done ? "is-done" : ""}">
         <label><input type="checkbox" data-bring="${b.id}" ${b.done ? "checked" : ""}><span>${esc(b.name)}</span></label>
-        <button class="mini" type="button" data-bdel="${b.id}" aria-label="${esc(b.name)} を消す">✕</button>
+        <button class="mini" type="button" data-bdel="${b.id}" aria-label="${esc(b.name)} を消す">${iconHtml("close")}</button>
       </li>`
     )
     .join("");
   const have = new Set(t.bring.map((b) => b.name));
   $("bIdeas").innerHTML = BRING_IDEAS.filter((n) => !have.has(n))
-    .map((n) => `<button class="ls-chip is-small" type="button" data-bidea="${esc(n)}">＋ ${esc(n)}</button>`)
+    .map((n) => `<button class="ls-chip is-small" type="button" data-bidea="${esc(n)}">${iconHtml("add")}${esc(n)}</button>`)
     .join("");
   $("bClear").hidden = !done;
 }
@@ -489,7 +500,7 @@ async function renderShare(t) {
   const { params, fits } = tripCard(t, ui.shareUrl);
   $("cardBtn").href = window.OQRN ? window.OQRN.cardUrl(params) : "#";
   $("cardNote").hidden = fits;
-  $("cardNote").textContent = "※ しおりが長いので、カードのボタンからはしおりを開けません。「🔗 しおりのリンクを送る」もいっしょに送ってください。";
+  $("cardNote").textContent = "※ しおりが長いので、カードのボタンからはしおりを開けません。「しおりのリンクを送る」もいっしょに送ってください。";
 }
 
 $("shareBtn").addEventListener("click", async () => {
@@ -615,7 +626,7 @@ window.addEventListener("load", () =>
     [
       "行き先と日にちを決めると、日ごとの予定と持ち物をまとめたしおりができます",
       "予定の名前を押すと直せます。右の丸は「行った・済んだ」のしるし",
-      "「🔗 しおりのリンクを送る」で、家族や友だちに同じしおりを渡せます"
+      "「しおりのリンクを送る」で、家族や友だちに同じしおりを渡せます"
     ],
     document.getElementById("tripBar")
   )

@@ -40,6 +40,7 @@ input[type="date"]::-webkit-date-and-time-value, input[type="time"]::-webkit-dat
 select.ls-input { -webkit-appearance: none; appearance: none; min-width: 0; background-image: linear-gradient(45deg, transparent 50%, var(--ls-subtext) 50%), linear-gradient(135deg, var(--ls-subtext) 50%, transparent 50%); background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 30px; }
 textarea.ls-input { resize: vertical; font-size: 16px; line-height: 1.5; }
 .stay { margin-top: -4px; font-weight: 700; }
+.stay .ls-icon { margin-right: 4px; }
 
 .form-actions { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; }
 .form-actions [hidden] { display: none; }
@@ -80,7 +81,8 @@ textarea.ls-input { resize: vertical; font-size: 16px; line-height: 1.5; }
 .kind { position: relative; z-index: 1; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--ls-surface, #fff); box-shadow: 0 0 0 2px var(--ls-line); font-size: 16px; }
 .body { display: grid; gap: 2px; min-width: 0; }
 .title { overflow: hidden; padding: 4px 0 0; border: 0; background: none; color: var(--ls-text); font-size: 16px; font-weight: 800; text-align: left; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
-.place { overflow: hidden; color: var(--ls-subtext); font-size: 13px; font-weight: 700; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+.place { display: flex; align-items: center; gap: 4px; min-width: 0; color: var(--ls-subtext); font-size: 13px; font-weight: 700; text-decoration: none; }
+.place span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .memo { margin: 2px 0 0; color: var(--ls-subtext); font-size: 13px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
 .done { display: grid; place-items: center; width: 34px; height: 34px; margin-top: 2px; padding: 0; border: 2px dashed var(--ls-line-strong); border-radius: 50%; background: none; color: #fff; font-size: 17px; font-weight: 800; cursor: pointer; }
 .item.is-done .done { border: 0; background: var(--ls-accent); }
@@ -105,7 +107,7 @@ textarea.ls-input { resize: vertical; font-size: 16px; line-height: 1.5; }
 .kind-chip small { font-size: 11px; font-weight: 700; }
 .item-more { display: grid; gap: 8px; }
 .item-more[hidden] { display: none; }
-.sub-title { margin: 8px 0 0; padding-top: 8px; border-top: 1px dashed var(--ls-line); font-size: 14px; font-weight: 800; }
+.sub-title { display: flex; align-items: center; gap: 8px; margin: 8px 0 0; padding-top: 8px; border-top: 1px dashed var(--ls-line); font-size: 14px; font-weight: 800; }
 
 
 /* 持ち物 */
