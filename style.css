@@ -75,7 +75,6 @@ textarea.ls-input { resize: vertical; font-size: 16px; line-height: 1.5; }
 .item + .item { border-top: 1px dashed var(--ls-line); }
 .time { padding-top: 4px; color: var(--ls-text); font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .body { display: grid; gap: 2px; min-width: 0; }
-.title .ls-icon { margin-right: 8px; }
 .title { overflow: hidden; padding: 4px 0 0; border: 0; background: none; color: var(--ls-text); font-size: 16px; font-weight: 800; text-align: left; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
 .place { display: flex; align-items: center; gap: 4px; min-width: 0; color: var(--ls-subtext); font-size: 13px; font-weight: 700; text-decoration: none; }
 .place span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -128,6 +127,9 @@ textarea.ls-input { resize: vertical; font-size: 16px; line-height: 1.5; }
 
 /* しるしの選択肢（Q キットの ls-picker の中）：候補 12 個は 6 列×2 段、カスタムはその下に横いっぱい */
 .emoji-items { display: contents; }
+/* 予定のしるしの候補：絵文字の下に、見る・ごはん…の名前 */
+.kind-item { display: grid; justify-items: center; align-content: center; gap: 0; line-height: 1.2; }
+.kind-item small { font-size: 11px; font-weight: 700; }
 .emoji-custom { grid-column: 1 / -1; margin-top: 8px; }
 .emoji-custom::placeholder { font-size: 13px; }
 

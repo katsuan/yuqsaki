@@ -100,11 +100,18 @@
           <label class="ls-field"><span class="ls-label">時刻（なくてもOK）</span><input id="iTime" class="ls-input" type="time"></label>
           <label class="ls-field"><span class="ls-label">日にち</span><select id="iDay" class="ls-input"></select></label>
         </div>
-        <div id="iKinds" class="ls-chips" role="radiogroup" aria-label="なにをする？"></div>
-        <label class="ls-field">
-          <span class="ls-label">予定</span>
-          <input id="iTitle" class="ls-input" maxlength="40" placeholder="例：美ら海水族館" autocomplete="off" enterkeyhint="next">
-        </label>
+        <!-- 入力枠の中の左にしるし [📍 予定]（しおりの名前と同じ Q キットの ls-pickfield）。下に、見る・ごはん…の候補とカスタム -->
+        <div class="ls-field">
+          <span class="ls-label" id="iTitleLabel">しるしと予定</span>
+          <div id="iTitleField" class="ls-pickfield">
+            <button id="iKindBtn" class="ls-pickfield-btn" type="button" aria-controls="iKinds"><span id="iKindNow"></span></button>
+            <input id="iTitle" maxlength="40" placeholder="例：美ら海水族館" autocomplete="off" enterkeyhint="next" aria-labelledby="iTitleLabel">
+          </div>
+          <div id="iKinds" class="ls-picker" role="radiogroup" aria-label="なにをする？" style="--cols: 5" hidden>
+            <div id="iKindItems" class="emoji-items"></div>
+            <input id="iKindCustom" class="ls-picker-custom emoji-custom" maxlength="8" placeholder="✏️ カスタム（好きな絵文字を1つ）" autocomplete="off" enterkeyhint="done" aria-label="カスタムのしるし（好きな絵文字を1つ）">
+          </div>
+        </div>
         <p id="iTitleError" class="ls-hint is-error" role="alert" hidden>予定を入れてね</p>
         <label class="ls-field">
           <span class="ls-label">場所（地図で開く。なければ予定の名前で探す）</span>

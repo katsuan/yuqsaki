@@ -9,18 +9,17 @@ import { planQuery, tripCard } from "./js/card.js?v=202611012034";
 
 const $ = (id) => document.getElementById(id);
 const TRIP_EMOJIS = ["🧳", "✈️", "🏝️", "⛰️", "♨️", "🏕️", "🎡", "🚗", "🚃", "🍜", "👪", "🎒"];
-// 予定の種類：しまうのは絵文字のまま（リンク・カード・前のしおりと合わせる）。画面では Q キットの線アイコンで出す
 const KINDS = [
-  ["📍", "見る", "camera"],
-  ["🍴", "ごはん", "utensils"],
-  ["☕", "休む", "coffee"],
-  ["🛍️", "買う", "shopping-bag"],
-  ["🏨", "宿", "bed-double"],
-  ["🚗", "車", "car"],
-  ["🚃", "電車", "train-front"],
-  ["✈️", "飛行機", "plane"],
-  ["♨️", "温泉", "waves"],
-  ["🎡", "遊ぶ", "ferris-wheel"]
+  ["📍", "見る"],
+  ["🍴", "ごはん"],
+  ["☕", "休む"],
+  ["🛍️", "買う"],
+  ["🏨", "宿"],
+  ["🚗", "車"],
+  ["🚃", "電車"],
+  ["✈️", "飛行機"],
+  ["♨️", "温泉"],
+  ["🎡", "遊ぶ"]
 ];
 const BRING_IDEAS = ["着がえ", "充電器", "保険証", "常備薬", "歯ブラシ", "タオル", "日焼け止め", "雨具", "エコバッグ", "おやつ", "現金", "ウェットティッシュ"];
 
@@ -40,11 +39,6 @@ const ui = {
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 // Q キットの線アイコン（HTML の文字で。名前は Q キットの kit.html の「線アイコン」）
 const iconHtml = (name) => `<span class="ls-icon" data-icon="${name}" aria-hidden="true"></span>`;
-// 予定の種類のしるし：決まった種類は線アイコン、ほかから来た絵文字はそのまま出す
-const kindHtml = (kind) => {
-  const k = KINDS.find(([e]) => e === kind);
-  return k ? iconHtml(k[2]) : kind ? `${esc(kind)} ` : "";
-};
 
 // いまのしおりを端末に残す。残せなかったら知らせる
 function persist() {
@@ -277,7 +271,7 @@ function renderDays(t) {
           return `<li class="item${it.done ? " is-done" : ""}${it.id === ui.editing ? " is-editing" : ""}${it.id === ui.justAdded ? " is-new" : ""}">
             <span class="time">${it.time || ""}</span>
             <div class="body">
-              <button class="title" type="button" data-edit="${it.id}" aria-label="${esc(it.title)} を直す">${kindHtml(it.kind)}${esc(it.title)}</button>
+              <button class="title" type="button" data-edit="${it.id}" aria-label="${esc(it.title)} を直す">${it.kind ? `${esc(it.kind)} ` : ""}${esc(it.title)}</button>
               <a class="place" href="${mapUrl(place)}" target="_blank" rel="noopener">${iconHtml("place")}<span>${esc(it.place || "地図で見る")}</span></a>
               ${it.memo ? `<p class="memo">${esc(it.memo)}</p>` : ""}
             </div>
@@ -343,7 +337,13 @@ function renderItemForm(t) {
   if (!ui.itemForm) return;
   $("itemFormHeading").innerHTML = ui.editing ? `${iconHtml("edit")}予定を直す` : `${iconHtml("add")}予定を足す`;
   $("iSave").innerHTML = ui.editing ? `${iconHtml("edit")}直す` : `${iconHtml("add")}足す`;
-  $("iKinds").innerHTML = KINDS.map(([e, name, icon]) => `<button class="ls-chip is-small" type="button" role="radio" aria-checked="${e === ui.kind}" data-kind="${e}">${iconHtml(icon)}${name}</button>`).join("");
+  // しるし：予定の入力枠の中の左。下の候補は、押したとき・予定を入れているあいだだけ出る（しおりの名前と同じ）
+  $("iKindNow").textContent = ui.kind;
+  $("iKindBtn").setAttribute("aria-label", `しるしを選ぶ（いま：${ui.kind}）`);
+  const custom = !KINDS.some(([e]) => e === ui.kind);
+  $("iKindCustom").classList.toggle("is-selected", custom);
+  if (custom && document.activeElement !== $("iKindCustom")) $("iKindCustom").value = ui.kind;
+  $("iKindItems").innerHTML = KINDS.map(([e, name]) => `<button class="ls-picker-item kind-item" type="button" role="radio" aria-checked="${e === ui.kind}" aria-label="${name}" data-kind="${e}">${e}<small>${name}</small></button>`).join("");
   $("iMore").hidden = !ui.editing;
   if (ui.editing) {
     const it = t.items.find((x) => x.id === ui.editing);
@@ -355,12 +355,26 @@ $("addItemBtn").addEventListener("click", () => {
   if (currentTrip(state).items.length >= MAX_ITEMS) return say(`予定は ${MAX_ITEMS} 件までです`);
   openItemForm(null);
 });
+const iKindPick = window.LineShareUI?.pickField?.({ field: $("iTitleField"), button: $("iKindBtn"), input: $("iTitle"), picker: $("iKinds") }) || null;
+if (!iKindPick) $("iKindBtn").addEventListener("click", () => ($("iKinds").hidden = !$("iKinds").hidden));
 $("iKinds").addEventListener("click", (e) => {
   const b = e.target.closest("[data-kind]");
   if (!b) return;
   ui.kind = b.dataset.kind;
+  $("iKindCustom").value = "";
   renderItemForm(currentTrip(state));
+  // 選んだらたたむ（予定を入れているあいだは開いたまま）
+  if (document.activeElement !== $("iTitle")) iKindPick ? iKindPick.close() : ($("iKinds").hidden = true);
 });
+// カスタム：入れた絵文字の1つめを、しるしにする
+["input", "focus"].forEach((type) =>
+  $("iKindCustom").addEventListener(type, () => {
+    const mark = firstMark($("iKindCustom").value);
+    if (!mark) return;
+    ui.kind = mark;
+    renderItemForm(currentTrip(state));
+  })
+);
 $("iTitle").addEventListener("input", () => ($("iTitleError").hidden = true));
 $("iCancel").addEventListener("click", () => {
   closeItemForm();
