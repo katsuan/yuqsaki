@@ -69,17 +69,13 @@ textarea.ls-input { resize: vertical; font-size: 16px; line-height: 1.5; }
 .day-tabs .ls-tab small { font-size: 11px; font-weight: 700; }
 .day-tabs .ls-tab i { position: absolute; top: 4px; right: 8px; color: var(--ls-subtext); font-size: 11px; font-style: normal; font-weight: 800; line-height: 16px; }
 
-/* 予定：時刻・しるし・名前と場所・済み */
+/* 予定：時刻・しるしと名前（1行）と場所・済み */
 .timeline { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
-.item { position: relative; display: grid; grid-template-columns: 48px 32px minmax(0, 1fr) auto; align-items: start; gap: 8px; padding: 8px 0; }
+.item { position: relative; display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: start; gap: 8px; padding: 8px 0; }
 .item + .item { border-top: 1px dashed var(--ls-line); }
-/* 予定をつなぐ縦の線 */
-.item::before { content: ""; position: absolute; left: 71px; top: 0; bottom: 0; width: 2px; background: var(--ls-line); }
-.item:first-child::before { top: 24px; }
-.item:nth-last-child(2)::before { bottom: calc(100% - 24px); }
 .time { padding-top: 4px; color: var(--ls-text); font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
-.kind { position: relative; z-index: 1; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--ls-surface, #fff); box-shadow: 0 0 0 2px var(--ls-line); font-size: 16px; }
 .body { display: grid; gap: 2px; min-width: 0; }
+.title .ls-icon { margin-right: 8px; }
 .title { overflow: hidden; padding: 4px 0 0; border: 0; background: none; color: var(--ls-text); font-size: 16px; font-weight: 800; text-align: left; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
 .place { display: flex; align-items: center; gap: 4px; min-width: 0; color: var(--ls-subtext); font-size: 13px; font-weight: 700; text-decoration: none; }
 .place span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -101,10 +97,6 @@ textarea.ls-input { resize: vertical; font-size: 16px; line-height: 1.5; }
 /* 予定を足す・直す */
 .item-form { display: grid; gap: 12px; padding-top: 4px; }
 .item-form[hidden] { display: none; }
-.kinds { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
-.kind-chip { display: grid; justify-items: center; gap: 0; min-height: 52px; padding: 4px 0; line-height: 1.2; }
-.kind-chip span { font-size: 18px; }
-.kind-chip small { font-size: 11px; font-weight: 700; }
 .item-more { display: grid; gap: 8px; }
 .item-more[hidden] { display: none; }
 .sub-title { display: flex; align-items: center; gap: 8px; margin: 8px 0 0; padding-top: 8px; border-top: 1px dashed var(--ls-line); font-size: 14px; font-weight: 800; }

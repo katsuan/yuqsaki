@@ -41,7 +41,7 @@
 
   <!-- しおりを作る・直す -->
   <section id="tripForm" class="ls-panel" aria-labelledby="tripFormTitle" hidden>
-    <h2 id="tripFormTitle" class="ls-panel-title">🧳 <span id="tripFormHeading">しおりを作る</span></h2>
+    <h2 id="tripFormTitle" class="ls-panel-title"><span class="ls-icon" data-icon="notebook" aria-hidden="true"></span><span id="tripFormHeading">しおりを作る</span></h2>
     <!-- 入力枠の中の左にしるし [✈️ 行き先・名前]（Q キットの ls-pickfield。ろくが・さくせん盤・つづく・そらくると同じ形）。
          しるしを押したとき・名前を入れているあいだは、下に選べるしるし（しっぽがしるしを指す） -->
     <div class="ls-field">
@@ -80,9 +80,9 @@
         <span id="vCount" class="count"></span>
       </div>
       <div class="head-actions">
-        <button id="editTrip" class="ls-button two-line" type="button">✏️ 直す<small>名前・日にち</small></button>
+        <button id="editTrip" class="ls-button two-line" type="button"><span class="ls-icon" data-icon="edit" aria-hidden="true"></span>直す<small>名前・日にち</small></button>
         <a id="qronosLink" class="ls-button" href="#" target="_blank" rel="noopener">⏳ くろのす<small>出発まで数える</small></a>
-        <a id="soraqruLink" class="ls-button" href="#" target="_blank" rel="noopener" hidden>🌤️ 天気<small id="soraqruWhen">行き先の天気</small></a>
+        <a id="soraqruLink" class="ls-button" href="#" target="_blank" rel="noopener" hidden><span class="ls-icon" data-icon="cloud-sun" aria-hidden="true"></span>天気<small id="soraqruWhen">行き先の天気</small></a>
       </div>
     </section>
 
@@ -100,7 +100,7 @@
           <label class="ls-field"><span class="ls-label">時刻（なくてもOK）</span><input id="iTime" class="ls-input" type="time"></label>
           <label class="ls-field"><span class="ls-label">日にち</span><select id="iDay" class="ls-input"></select></label>
         </div>
-        <div id="iKinds" class="kinds" role="radiogroup" aria-label="なにをする？"></div>
+        <div id="iKinds" class="ls-chips" role="radiogroup" aria-label="なにをする？"></div>
         <label class="ls-field">
           <span class="ls-label">予定</span>
           <input id="iTitle" class="ls-input" maxlength="40" placeholder="例：美ら海水族館" autocomplete="off" enterkeyhint="next">
@@ -135,7 +135,7 @@
 
     <div class="ls-folds">
       <details class="ls-fold" id="bringFold">
-        <summary><span class="ls-fold-icon" aria-hidden="true">🎒</span>持ち物<span id="bringMeta" class="ls-fold-meta"></span></summary>
+        <summary><span class="ls-fold-icon ls-icon" data-icon="bag" aria-hidden="true"></span>持ち物<span id="bringMeta" class="ls-fold-meta"></span></summary>
         <div class="ls-fold-body">
           <ul id="bringList" class="bring-list"></ul>
           <div class="bring-add">
@@ -148,7 +148,7 @@
       </details>
 
       <details class="ls-fold" id="settings">
-        <summary><span class="ls-fold-icon" aria-hidden="true">🔒</span>しおりの控え・消す</summary>
+        <summary><span class="ls-fold-icon ls-icon" data-icon="lock" aria-hidden="true"></span>しおりの控え・消す</summary>
         <div class="ls-fold-body">
           <p class="ls-hint">しおりはこの端末（ブラウザ）の中だけにあります。機種変更の前などに、控えを書き出しておいてください。</p>
           <div class="form-actions">

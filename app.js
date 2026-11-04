@@ -9,17 +9,18 @@ import { planQuery, tripCard } from "./js/card.js?v=202611012034";
 
 const $ = (id) => document.getElementById(id);
 const TRIP_EMOJIS = ["🧳", "✈️", "🏝️", "⛰️", "♨️", "🏕️", "🎡", "🚗", "🚃", "🍜", "👪", "🎒"];
+// 予定の種類：しまうのは絵文字のまま（リンク・カード・前のしおりと合わせる）。画面では Q キットの線アイコンで出す
 const KINDS = [
-  ["📍", "見る"],
-  ["🍴", "ごはん"],
-  ["☕", "休む"],
-  ["🛍️", "買う"],
-  ["🏨", "宿"],
-  ["🚗", "車"],
-  ["🚃", "電車"],
-  ["✈️", "飛行機"],
-  ["♨️", "温泉"],
-  ["🎡", "遊ぶ"]
+  ["📍", "見る", "camera"],
+  ["🍴", "ごはん", "utensils"],
+  ["☕", "休む", "coffee"],
+  ["🛍️", "買う", "shopping-bag"],
+  ["🏨", "宿", "bed-double"],
+  ["🚗", "車", "car"],
+  ["🚃", "電車", "train-front"],
+  ["✈️", "飛行機", "plane"],
+  ["♨️", "温泉", "waves"],
+  ["🎡", "遊ぶ", "ferris-wheel"]
 ];
 const BRING_IDEAS = ["着がえ", "充電器", "保険証", "常備薬", "歯ブラシ", "タオル", "日焼け止め", "雨具", "エコバッグ", "おやつ", "現金", "ウェットティッシュ"];
 
@@ -39,6 +40,11 @@ const ui = {
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 // Q キットの線アイコン（HTML の文字で。名前は Q キットの kit.html の「線アイコン」）
 const iconHtml = (name) => `<span class="ls-icon" data-icon="${name}" aria-hidden="true"></span>`;
+// 予定の種類のしるし：決まった種類は線アイコン、ほかから来た絵文字はそのまま出す
+const kindHtml = (kind) => {
+  const k = KINDS.find(([e]) => e === kind);
+  return k ? iconHtml(k[2]) : kind ? `${esc(kind)} ` : "";
+};
 
 // いまのしおりを端末に残す。残せなかったら知らせる
 function persist() {
@@ -199,11 +205,11 @@ $("tSave").addEventListener("click", () => {
     const t = currentTrip(state);
     const outside = t.items.filter((it) => it.day >= dayCount(start, end)).length;
     updateTrip(state, t.id, { title, emoji: ui.tEmoji, start, end });
-    say(outside ? `✏️ 直しました（はみ出た予定 ${outside} 件は最後の日へ）` : "✏️ 直しました");
+    say(outside ? `直しました（はみ出た予定 ${outside} 件は最後の日へ）` : "直しました");
   } else {
     addTrip(state, { title, emoji: ui.tEmoji, start, end });
     ui.day = 0;
-    say(cheer(`🧳 「${title}」のしおりを作りました。予定を足していきましょう`));
+    say(cheer(`「${title}」のしおりを作りました。予定を足していきましょう`));
   }
   ui.tripForm = null;
   persist();
@@ -270,9 +276,8 @@ function renderDays(t) {
           const place = it.place || it.title;
           return `<li class="item${it.done ? " is-done" : ""}${it.id === ui.editing ? " is-editing" : ""}${it.id === ui.justAdded ? " is-new" : ""}">
             <span class="time">${it.time || ""}</span>
-            <span class="kind" aria-hidden="true">${esc(it.kind)}</span>
             <div class="body">
-              <button class="title" type="button" data-edit="${it.id}" aria-label="${esc(it.title)} を直す">${esc(it.title)}</button>
+              <button class="title" type="button" data-edit="${it.id}" aria-label="${esc(it.title)} を直す">${kindHtml(it.kind)}${esc(it.title)}</button>
               <a class="place" href="${mapUrl(place)}" target="_blank" rel="noopener">${iconHtml("place")}<span>${esc(it.place || "地図で見る")}</span></a>
               ${it.memo ? `<p class="memo">${esc(it.memo)}</p>` : ""}
             </div>
@@ -338,7 +343,7 @@ function renderItemForm(t) {
   if (!ui.itemForm) return;
   $("itemFormHeading").innerHTML = ui.editing ? `${iconHtml("edit")}予定を直す` : `${iconHtml("add")}予定を足す`;
   $("iSave").innerHTML = ui.editing ? `${iconHtml("edit")}直す` : `${iconHtml("add")}足す`;
-  $("iKinds").innerHTML = KINDS.map(([e, name]) => `<button class="ls-chip kind-chip" type="button" role="radio" aria-checked="${e === ui.kind}" data-kind="${e}"><span>${e}</span><small>${name}</small></button>`).join("");
+  $("iKinds").innerHTML = KINDS.map(([e, name, icon]) => `<button class="ls-chip is-small" type="button" role="radio" aria-checked="${e === ui.kind}" data-kind="${e}">${iconHtml(icon)}${name}</button>`).join("");
   $("iMore").hidden = !ui.editing;
   if (ui.editing) {
     const it = t.items.find((x) => x.id === ui.editing);
@@ -372,13 +377,13 @@ $("iSave").addEventListener("click", () => {
   const editing = ui.editing && t.items.find((x) => x.id === ui.editing);
   if (editing) {
     Object.assign(editing, cleanItem({ ...editing, ...fields }, n));
-    say(`✏️ 「${title}」を直しました`);
+    say(`「${title}」を直しました`);
   } else {
     if (t.items.length >= MAX_ITEMS) return say(`予定は ${MAX_ITEMS} 件までです`);
     const it = cleanItem({ ...fields, id: newId() }, n);
     t.items.push(it);
     ui.justAdded = it.id;
-    say(`${it.kind} ${it.day + 1}日目に「${title}」を足しました`);
+    say(`${it.day + 1}日目に「${title}」を足しました`);
   }
   ui.day = fields.day;
   touch(t);
@@ -396,7 +401,7 @@ $("iDelete").addEventListener("click", () => {
   closeItemForm();
   persist();
   render();
-  say(`🗑 「${it.title}」を消しました`, () => {
+  say(`「${it.title}」を消しました`, () => {
     t.items.splice(Math.min(i, t.items.length), 0, it);
     persist();
     render();
@@ -470,7 +475,7 @@ $("bringList").addEventListener("click", (e) => {
   touch(t);
   persist();
   render();
-  say(`🗑 「${b.name}」を消しました`, () => {
+  say(`「${b.name}」を消しました`, () => {
     t.bring.splice(Math.min(i, t.bring.length), 0, b);
     persist();
     render();
@@ -481,7 +486,7 @@ $("bClear").addEventListener("click", () => {
   checked.forEach((b) => (b.done = false));
   persist();
   render();
-  say(`☑️ チェックを ${checked.length} こ外しました`, () => {
+  say(`チェックを ${checked.length} こ外しました`, () => {
     checked.forEach((b) => (b.done = true));
     persist();
     render();
@@ -519,7 +524,7 @@ $("shareBtn").addEventListener("click", async () => {
   }
   try {
     await navigator.clipboard.writeText(`${text}\n${ui.shareUrl}`);
-    say("🔗 しおりのリンクをコピーしました。LINE などに貼りつけて送ってください");
+    say("しおりのリンクをコピーしました。LINE などに貼りつけて送ってください");
   } catch {
     window.LineShareUI?.ask?.({ title: "長押ししてコピーしてください", input: ui.shareUrl, readonly: true, ok: "閉じる", cancel: null });
   }
@@ -566,7 +571,7 @@ $("deleteTrip").addEventListener("click", () => {
   ui.day = 0;
   persist();
   render();
-  say(`🗑 「${trash.trip.title}」のしおりを消しました`, () => {
+  say(`「${trash.trip.title}」のしおりを消しました`, () => {
     restoreTrip(state, trash);
     persist();
     render();
@@ -589,8 +594,8 @@ async function receiveFromHash() {
     persist();
     render();
     // 自分の端末のほうが新しければ、上書きしない（自分で直したばかりなど）
-    if (got.kept) return say(`📩 「${got.trip.title}」は、この端末のほうが新しいので、そのまま開きました`);
-    say(got.before ? `📩 「${got.trip.title}」を新しい内容にしました` : `📩 「${got.trip.title}」のしおりを受けとりました`, () => {
+    if (got.kept) return say(`「${got.trip.title}」は、この端末のほうが新しいので、そのまま開きました`);
+    say(got.before ? `「${got.trip.title}」を新しい内容にしました` : `「${got.trip.title}」のしおりを受けとりました`, () => {
       state = JSON.parse(snap);
       persist();
       render();
