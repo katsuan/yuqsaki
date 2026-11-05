@@ -460,12 +460,11 @@ $("shareBtn").addEventListener("click", async () => {
       if (err?.name === "AbortError") return;
     }
   }
-  try {
-    await navigator.clipboard.writeText(`${text}\n${ui.shareUrl}`);
-    say("しおりのリンクをコピーしました。LINE などに貼りつけて送ってください");
-  } catch {
-    window.LineShareUI?.ask?.({ title: "長押ししてコピーしてください", input: ui.shareUrl, readonly: true, ok: "閉じる", cancel: null });
-  }
+  // Q キットのコピー（できないときは長押しで選べる文字の窓）
+  await window.LineShareUI?.copy(`${text}\n${ui.shareUrl}`, {
+    done: () => say("しおりのリンクをコピーしました。LINE などに貼りつけて送ってください"),
+    title: "長押ししてコピーしてください"
+  });
 });
 
 // ---- 控え・消す ----
