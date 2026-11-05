@@ -42,7 +42,7 @@
 | `js/store.js` | しおりの保存・日付の計算・受けとったしおりの入れ方・控え |
 | `js/link.js` | URL の受け渡し（しおりをリンクに詰める・取り出す、Google マップ・くろのす・そらくるへのリンク） |
 | `js/card.js` | おくるんに渡す中身（しおりのお知らせカード・予定を「場所・予定」で送る） |
-| `test/` | テスト（`node --test test/`）。保存と受けとり（`store.test.mjs`）・カードとリンク（`card.test.mjs`）・画面の部品（`view.test.mjs`）・使い心地の決まり（`ux.test.mjs`） |
+| テスト | テストは、公開しない別の所に置いています（公開の前に GitHub Actions が読んで動かします） |
 | `tools/icon.py` | アイコン・ロゴ・OGP |
 
 ## アイコン・ロゴ・OGP
