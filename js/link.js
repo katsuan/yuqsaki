@@ -80,7 +80,7 @@ export async function unpackTrip(text) {
 
 // ---- ほかのページへのリンク（行き先は自分のツールと Google マップだけ。W5） ----
 export const PAGE_URL = "https://katsuan.github.io/yuqsaki/";
-const QRONOS_URL = "https://katsuan.github.io/countdown/";
+const QRONOS_URL = "https://katsuan.github.io/qronos/";
 const SORAQRU_URL = "https://katsuan.github.io/soraqru/";
 // 空白は %20 で（liff.line.me を通ると「+」がそのまま残るため。OQRN.cardUrl と同じ）
 const query = (q) => String(q).replace(/\+/g, "%20");
