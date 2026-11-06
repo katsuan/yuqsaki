@@ -56,4 +56,4 @@
 
 1. GitHub に `katsuan/yuqsaki` を作って push し、Pages を開く
 2. 確かめがすんだら `index.html` の noindex を外す
-3. おくるん（line-share）の `data/hub-links.json` に `key: "yuqsaki"` を足す（グループは「家族・記念日」か、新しく「おでかけ」）。`next` で、くろのす（出発まで数える）をおすすめにできる。`backup/app.js` の一覧に `["yuqsaki:", "ゆくさき", "yuqsaki"]` を足す
+3. おくるん（oqrn）の `data/hub-links.json` に `key: "yuqsaki"` を足す（グループは「家族・記念日」か、新しく「おでかけ」）。`next` で、くろのす（出発まで数える）をおすすめにできる。`backup/app.js` の一覧に `["yuqsaki:", "ゆくさき", "yuqsaki"]` を足す
