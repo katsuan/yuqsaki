@@ -6,6 +6,7 @@ import {
 } from "./js/store.js?v=202611012034";
 import { mapUrl, packTrip, qronosUrl, soraqruUrl, tripUrl, unpackTrip } from "./js/link.js?v=202611012034";
 import { planQuery, tripCard } from "./js/card.js?v=202611012034";
+import { NAMES } from "./js/names.js?v=202611012034";
 import {
   KINDS, TRIP_EMOJIS, bringIdeasHtml, bringListHtml, countView, dayOptionsHtml, dayTabsHtml, firstMark, iconHtml, markItemsHtml, timelineHtml, tripBarHtml
 } from "./js/view.js?v=202611012034";
@@ -472,7 +473,7 @@ $("exportBtn").addEventListener("click", async () => {
   const file = new File([exportJson(state)], `yuqsaki-${ymd()}.json`, { type: "application/json" });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     try {
-      await navigator.share({ files: [file], title: "ゆくさきのしおりの控え" });
+      await navigator.share({ files: [file], title: `${NAMES.app}のしおりの控え` });
     } catch {
       // やめたときは何もしない
     }
@@ -490,14 +491,14 @@ $("importFile").addEventListener("change", async (e) => {
   const file = e.target.files[0];
   e.target.value = "";
   if (!file) return;
-  if (file.size > MAX_IMPORT_BYTES) return say("ファイルが大きすぎます（ゆくさきで書き出した控えか確かめてください）");
+  if (file.size > MAX_IMPORT_BYTES) return say(`ファイルが大きすぎます（${NAMES.app}で書き出した控えか確かめてください）`);
   try {
     const added = importJson(state, await file.text());
     persist();
     render();
     say(`控えを読みこみました（しおりが ${added} つふえました）`);
   } catch {
-    say("読みこめませんでした（ゆくさきで書き出した控えか確かめてください）");
+    say(`読みこめませんでした（${NAMES.app}で書き出した控えか確かめてください）`);
   }
 });
 

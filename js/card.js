@@ -2,6 +2,7 @@
 // 読まれるところ：app.js（テストは test/card.test.mjs）
 import { addDays, dayCount, itemsOf, label, rangeLabel, str } from "./store.js?v=202611012034";
 import { PAGE_URL, mapUrl } from "./link.js?v=202611012034";
+import { NAMES } from "./names.js?v=202611012034";
 
 export const CARD_COLOR = "#12A0B0"; // ロゴの海の色
 export const URI_LIMIT = 1000; // LINE のカードのボタンに入れられる URL の長さ
@@ -25,7 +26,7 @@ export function tripCard(t, shareUrl) {
     theme: "custom",
     customColor: CARD_COLOR,
     showAction: "true",
-    actionLabel: fits ? "🧳 しおりを開く" : "🧳 ゆくさきを開く",
+    actionLabel: fits ? "🧳 しおりを開く" : `🧳 ${NAMES.app}を開く`,
     actionUrl: fits ? shareUrl : PAGE_URL,
     from: "yuqsaki"
   });
