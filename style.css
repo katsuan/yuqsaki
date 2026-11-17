@@ -37,7 +37,8 @@ body {
 .date-grid .ls-field, .time-grid .ls-field { min-width: 0; }
 input[type="date"].ls-input, input[type="time"].ls-input { -webkit-appearance: none; appearance: none; min-width: 0; width: 100%; min-height: 48px; font-size: 16px; text-align: left; }
 input[type="date"]::-webkit-date-and-time-value, input[type="time"]::-webkit-date-and-time-value { text-align: left; }
-select.ls-input { -webkit-appearance: none; appearance: none; min-width: 0; background-image: linear-gradient(45deg, transparent 50%, var(--ls-subtext) 50%), linear-gradient(135deg, var(--ls-subtext) 50%, transparent 50%); background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 30px; }
+/* 選ぶ欄（select）の下向きの印：Q キットの --ls-i-down と同じ形の線（色は --ls-subtext と同じ。暗いときは下の @media で） */
+select.ls-input { -webkit-appearance: none; appearance: none; min-width: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236b6a63%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22m6 9 6 6 6-6%22/%3E%3C/svg%3E"); background-position: calc(100% - 12px) 50%; background-size: 16px 16px; background-repeat: no-repeat; padding-right: 30px; }
 textarea.ls-input { resize: vertical; font-size: 16px; line-height: 1.5; }
 .stay { margin-top: -4px; font-weight: 700; }
 .stay .ls-icon { margin-right: 4px; }
@@ -48,10 +49,10 @@ textarea.ls-input { resize: vertical; font-size: 16px; line-height: 1.5; }
 /* しおりの見出し */
 .trip-title { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; }
 .trip-emoji { font-size: 34px; line-height: 1; }
-.trip-title h2 { margin: 0; overflow: hidden; font-size: 20px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.trip-title h2 { margin: 0; overflow: hidden; font-size: 20px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .trip-title p { margin: 2px 0 0; color: var(--ls-subtext); font-size: 13px; font-weight: 700; }
 .trip-title p span { white-space: nowrap; } /* 「3/1（水）」「2泊3日」を途中で折り返さない */
-.count { display: grid; justify-items: start; min-width: 56px; padding: 0; color: var(--ls-subtext); font-size: 12px; font-weight: 800; white-space: nowrap; }
+.count { display: grid; justify-items: start; min-width: 56px; padding: 0; color: var(--ls-subtext); font-size: 12px; font-weight: 700; white-space: nowrap; }
 .count b { color: var(--ls-text); }
 .count b { font-size: 22px; line-height: 1.1; }
 .count.is-now b { color: var(--ls-accent-ink); }
@@ -69,19 +70,19 @@ textarea.ls-input { resize: vertical; font-size: 16px; line-height: 1.5; }
 .day-tabs[hidden] { display: none; }
 .day-tabs .ls-tab { position: relative; display: grid; gap: 0; padding: 8px 4px; line-height: 1.25; }
 .day-tabs .ls-tab small { font-size: 11px; font-weight: 700; }
-.day-tabs .ls-tab i { position: absolute; top: 4px; right: 8px; color: var(--ls-subtext); font-size: 11px; font-style: normal; font-weight: 800; line-height: 16px; }
+.day-tabs .ls-tab i { position: absolute; top: 4px; right: 8px; color: var(--ls-subtext); font-size: 11px; font-style: normal; font-weight: 700; line-height: 16px; }
 
 /* 予定：時刻・しるしと名前（1行）と場所・済み */
 .timeline { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
 .item { position: relative; display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: start; gap: 8px; padding: 8px 0; }
 .item + .item { border-top: 1px dashed var(--ls-line); }
-.time { padding-top: 4px; color: var(--ls-text); font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.time { padding-top: 4px; color: var(--ls-text); font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .body { display: grid; gap: 2px; min-width: 0; }
-.title { overflow: hidden; padding: 4px 0 0; border: 0; background: none; color: var(--ls-text); font-size: 16px; font-weight: 800; text-align: left; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.title { overflow: hidden; padding: 4px 0 0; border: 0; background: none; color: var(--ls-text); font-size: 16px; font-weight: 700; text-align: left; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
 .place { display: flex; align-items: center; gap: 4px; min-width: 0; color: var(--ls-subtext); font-size: 13px; font-weight: 700; text-decoration: none; }
 .place span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .memo { margin: 2px 0 0; color: var(--ls-subtext); font-size: 13px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
-.done { display: grid; place-items: center; width: 34px; height: 34px; margin-top: 2px; padding: 0; border: 2px dashed var(--ls-line-strong); border-radius: 50%; background: none; color: #fff; font-size: 17px; font-weight: 800; cursor: pointer; }
+.done { display: grid; place-items: center; width: 34px; height: 34px; margin-top: 2px; padding: 0; border: 2px dashed var(--ls-line-strong); border-radius: 50%; background: none; color: #fff; font-size: 17px; font-weight: 700; cursor: pointer; }
 .item.is-done .done { border: 0; background: var(--ls-accent); }
 /* 見た目は 34px の丸のまま、押せる広さは 44px に（C3） */
 .done, .mini { position: relative; }
@@ -100,7 +101,7 @@ textarea.ls-input { resize: vertical; font-size: 16px; line-height: 1.5; }
 .item-form[hidden] { display: none; }
 .item-more { display: grid; gap: 8px; }
 .item-more[hidden] { display: none; }
-.sub-title { display: flex; align-items: center; gap: 8px; margin: 8px 0 0; padding-top: 8px; border-top: 1px dashed var(--ls-line); font-size: 14px; font-weight: 800; }
+.sub-title { display: flex; align-items: center; gap: 8px; margin: 8px 0 0; padding-top: 8px; border-top: 1px dashed var(--ls-line); font-size: 14px; font-weight: 700; }
 
 
 /* 持ち物 */
@@ -125,6 +126,7 @@ textarea.ls-input { resize: vertical; font-size: 16px; line-height: 1.5; }
   :root[data-ls-dark="auto"] { --ls-accent-ink: #6fd6e2; --ls-tabs-bg: rgba(18, 160, 176, 0.14); }
   :root[data-ls-dark="auto"] html, :root[data-ls-dark="auto"] body { background: var(--ls-bg); }
   :root[data-ls-dark="auto"] .item.is-new { animation: none; }
+  :root[data-ls-dark="auto"] select.ls-input { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23a9a7b2%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22m6 9 6 6 6-6%22/%3E%3C/svg%3E"); }
 }
 
 /* しるしの選択肢（Q キットの ls-picker の中）：候補 12 個は 6 列×2 段、カスタムはその下に横いっぱい */
